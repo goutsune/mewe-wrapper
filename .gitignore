@@ -1,0 +1,6 @@
+*.geany
+/app/config.py
+env
+__pycache__
+/app/*.session*
+/mewe.com_cookies.txt
