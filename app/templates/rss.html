@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>{{title}}</title>
+  <link href="{{link}}" />
+  <id>{{link}}</id>
+  <subtitle type="html">
+  <![CDATA[
+      <center>{{ title }}</center>
+      <center style="white-space:pre-wrap;">{{ info }}</center>
+  ]]>
+  </subtitle>
+  <updated>{{ build }}</updated>
+  <icon>{{ avatar }}/favicon.ico</icon>
+  <logo>{{ avatar }}/icon.jpg</logo>
+  {% for msg in contents %}
+  <entry>
+    <content type="html">{{ msg['text'] }}</content>
+    <title>{{ msg['title'] }}</title>
+    <updated>{{ msg['date'] }}</updated>
+    <author><name>{{ msg['author'] }}</name></author>
+    <link href="{{ msg['link'] }}" />
+    <id>{{ msg['guid'] }}</id>
+  </entry>
+  {% endfor %}
+</feed>

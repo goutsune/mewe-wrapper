@@ -1,0 +1,17 @@
+<html>
+  <head>
+    <title>Last messages from {{title}}</title>
+  </head>
+  <body>
+    <center><img src="{{ avatar|safe }}"/></center>
+    <center><a href="{{ link }}">{{ title }}</a></center>
+    <center style="white-space: pre-line">{{ info }}</center>
+    <hr><hr>
+    {% for msg in contents %}
+    <b>Date: {{ msg['date'] }}</b> <b>From: {{ msg['author'] }}:</b><br/>
+      <i>Title: {{ msg['title']}}</i>
+      <p>{{ msg['text']|safe }}</p>
+    <hr/>
+    {% endfor %}
+  </body>
+</html>
