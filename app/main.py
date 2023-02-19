@@ -7,6 +7,7 @@ from hypercorn import Config
 from quart import Quart, Response, render_template, request, abort
 from requests import Session, get, post
 from requests.utils import quote
+from time import sleep
 from urllib import parse as p
 
 from config import cookie_storage, listen_hosts, user_agent, hostname
@@ -61,8 +62,8 @@ class MadMachine:
     # Example: 'Для \ufeff@{{u_5c25c5da3c8bb1088cb5f62e}Naru Ootori}\ufeff приготовила.'
 
   def is_token_expired(self):
-    cookie = self.session.cookies._cookies['.mewe.com']['/']['access-token']
-    return cookie.is_expired()
+    access_token = self.session.cookies._cookies['.mewe.com']['/']['access-token']
+    return access_token.is_expired()
 
   def session_ok(self):
     '''Checks if current session is still usable (e.g. no logout occurred due to API abuse or refresh token
@@ -118,9 +119,9 @@ class MadMachine:
     '''Invokes mycontacts/user/{user_id} method to fetch information about a user by their ID, contacts only.
     '''
     self.refresh_session()
-    r = self.session.get(f'{self.base}/v2/mycontacts/user/{user_id}')  # TODO: Sanity checks, any?
+    r = self.session.get(f'{self.base}/v2/mycontacts/user/{user_id}')
     if not r.ok:
-      return {'error': True}
+      raise ValueError(r.text)
     return r.json()
 
   def _get_feed(self, endpoint, limit, pages):
@@ -140,7 +141,7 @@ class MadMachine:
 
       r = self.session.get(endpoint, params=payload)
       if not r.ok:
-        return [{'error': True}], {'error': r.text}
+        raise ValueError(r.text)
 
       page_feed = r.json()['feed']
       page_users_list = r.json()['users']
@@ -187,7 +188,7 @@ class MadMachine:
 
   def _prepare_photo_media(self, photo):
     photo_size = f'{photo["size"]["width"]}x{photo["size"]["height"]}'
-    photo_url = photo['_links']['img']['href'].format(imageSize=photo_size, static=1)
+    photo_url = photo['_links']['img']['href'].format(imageSize=photo_size, static=0)
     quoted_url = quote(photo_url, safe='')
     mime = photo['mime']
     name = photo['id']
@@ -207,10 +208,10 @@ class MadMachine:
     base_text = c.markdown(post.get('text', ''))
     media_text = ''
     link_text = ''
+    poll_text = ''
 
     # Render post links
-    if post.get('link'):
-      link = post['link']
+    if link := post.get('link'):
       link_title = link.get('title', '')
       link_title_tag = f'<b>{link_title}</b><br/>' if link_title else ''
       link_url = link['_links']['url']['href']
@@ -229,14 +230,25 @@ class MadMachine:
 
       link_text = f'<blockquote>{link_text}</blockquote>'
 
-    # Render post media (e.g. video, GIF or Music)
-    if post.get('medias'):
-      for media in post['medias']:
+    # Render post poll
+    if poll := post.get('poll'):
+      poll_text = f'<p>Poll: {poll["question"]}</p><p>Results:</p><ul>'
+      total_votes = sum([x['votes'] for x in poll['options']])
+
+      for vote in poll['options']:
+        vote_percent = round(vote['votes'] / total_votes * 100)
+        poll_text += f'<li>{vote["text"]} — {vote["votes"]} ({vote_percent}%)</li>'
+
+      poll_text += '</ul><br/>'
+
+    # Render post media (e.g. video or music)
+    if medias := post.get('medias'):
+      for media in medias:
 
         # Video with associated photo object
-        if media.get('video'):
+        if video := media.get('video'):
           p_url, p_mime, p_name = self._prepare_photo_media(media['photo'])
-          v_url, v_name = self._prepare_video_media(media['video'])
+          v_url, v_name = self._prepare_video_media(video)
           width = min(media['photo']['size']['width'], 640)
           media_text += \
             f'<video width="{width}" height="auto" controls=1'\
@@ -245,12 +257,14 @@ class MadMachine:
             '</video>'
 
         # Image with no associated video object
-        elif media.get('photo'):
-          url, mime, name = self._prepare_photo_media(media['photo'])
-
+        # TODO: MeWe won't return links to all photo objects in post, so they need to be requested through
+        # mediafeed method
+        elif photo := media.get('photo'):
+          url, mime, name = self._prepare_photo_media(photo)
           media_text += f'<img src="{hostname}/proxy?url={url}&mime={mime}&name={name}"></img><br/>'
 
     prepared_post = base_text + '<br/>' if base_text else ''
+    prepared_post += poll_text if poll_text else ''
     prepared_post += media_text if media_text else ''
     prepared_post += link_text if link_text else ''
     return prepared_post
@@ -277,13 +291,13 @@ async def cleanup():
   c.refresh_session()
 
 
-@app.before_request
-async def conn_check():
-  '''Fetch new token and perhaps update refresh token here
-  '''
-  if not c.session_ok():
-    print("Not connected, reconnecting...")
-    await startup()
+#@app.before_request
+#async def conn_check():
+#  '''Fetch new token and perhaps update refresh token here
+#  '''
+#  if not c.session_ok():
+#    print("Not connected, reconnecting...")
+#    await startup()
 
 
 # ###################### Utils
@@ -369,6 +383,34 @@ async def retr_userfeed(user_id):
   return await render_template(
     'history.html', contents=posts, info=info, title=title, link=link, avatar=avatar, build=build)
 
+@app.route('/userfeed_rss/<string:user_id>')
+async def retr_userfeed_rss(user_id):
+  # Abort shortly on HEAD request to save time
+  if request.method == 'HEAD':
+    return "OK"
+
+  import pudb;pu.db
+  print('retr_userfeed_rss got called')
+  limit = request.args.get('limit', '50')
+  pages = int(request.args.get('pages', '1'))
+
+  feed, users = c.get_user_feed(user_id, limit=limit, pages=pages)
+  posts = process_feed(feed, users)
+  user = users[user_id]
+
+  # TODO: Fetch user info here to prepare some nice channel description
+  info = ''
+
+  title = f'{user["name"]}'
+
+  link = f'https://mewe.com/i/{user["contactInviteId"]}'
+  profile_pic = user['_links']['avatar']['href'].format(imageSize='1280x1280')
+  pp_quoted = quote(profile_pic, safe='')
+  avatar = f'{hostname}/proxy?url={pp_quoted}&mime=image/jpeg&name={user["id"]}'
+  build = datetime.now().strftime(r'%Y-%m-%dT%H:%M:%S%z')
+
+  return await render_template(
+    'rss.html', contents=posts, info=info, title=title, link=link, avatar=avatar, build=build)
 
 @app.route('/proxy')
 def proxy_media():
@@ -381,7 +423,7 @@ def proxy_media():
 
   res = c.session.get(f'https://mewe.com{url}', stream=True)
 
-  return res.iter_content(chunk_size=None), {
+  return res.iter_content(chunk_size=1024), {
      'Content-Type': mime,
      'Content-Disposition': f'inline; filename={name}'}
 
