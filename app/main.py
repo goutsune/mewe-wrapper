@@ -24,6 +24,7 @@ class MadMachine:
   identity = None
   base = 'https://mewe.com/api'
   markdown = None
+  last_streamed_response = None
 
   def __init__(self):
     '''Things to do:
@@ -79,6 +80,11 @@ class MadMachine:
   def refresh_session(self):
     '''Checks current access token and receive new one accordingly
     '''
+    # Force-close last streamed connection in case it is still hogging up session
+    if self.last_streamed_response is not None:
+      self.last_streamed_response.close()
+      self.last_streamed_response = None
+
     if not self.is_token_expired():
       self.session.cookies.save(ignore_discard=True, ignore_expires=True)
       return
@@ -389,8 +395,6 @@ async def retr_userfeed_rss(user_id):
   if request.method == 'HEAD':
     return "OK"
 
-  import pudb;pu.db
-  print('retr_userfeed_rss got called')
   limit = request.args.get('limit', '50')
   pages = int(request.args.get('pages', '1'))
 
@@ -422,9 +426,11 @@ def proxy_media():
   name = request.args.get('name')
 
   res = c.session.get(f'https://mewe.com{url}', stream=True)
-
+  content_length = res.headers['content-length']
+  c.last_streamed_response = res
   return res.iter_content(chunk_size=1024), {
      'Content-Type': mime,
+     'Content-Length': content_length,
      'Content-Disposition': f'inline; filename={name}'}
 
 # ###################### Webserver init
