@@ -1,9 +1,9 @@
 import asyncio
+import markdown
 from datetime import datetime
 from http import cookiejar
 from hypercorn.asyncio import serve
 from hypercorn import Config
-from markdown import markdown
 from quart import Quart, Response, render_template, request, abort
 from requests import Session, get, post
 from requests.utils import quote
@@ -17,10 +17,12 @@ class MadMachine:
   session:  An requests Session object
   identity: Dictionary to store information about currently logged-in user
   base:     Base MeWe API path
+  markdown: Markdown class instance customized for MeWe
   '''
   session = None
   identity = None
   base = 'https://mewe.com/api'
+  markdown = None
 
   def __init__(self):
     '''Things to do:
@@ -49,6 +51,14 @@ class MadMachine:
 
     self.identity = session.get(f'{self.base}/v2/me/info').json()
     self.session = session
+
+    # We need custom markdown parser with HeaderProcessor unregistered, so let's store it here.
+    # Lets also add hard line breaks while we're ar it.
+    markdown_instance = markdown.Markdown(extensions=['nl2br'])
+    markdown_instance.parser.blockprocessors.deregister('hashheader')
+    self.markdown = markdown_instance.convert
+    # TODO: Needs block processor for user links.
+    # Example: 'Для \ufeff@{{u_5c25c5da3c8bb1088cb5f62e}Naru Ootori}\ufeff приготовила.'
 
   def is_token_expired(self):
     cookie = self.session.cookies._cookies['.mewe.com']['/']['access-token']
@@ -130,7 +140,7 @@ class MadMachine:
 
       r = self.session.get(endpoint, params=payload)
       if not r.ok:
-        return {'error': True}
+        return [{'error': True}], {'error': r.text}
 
       page_feed = r.json()['feed']
       page_users_list = r.json()['users']
@@ -173,10 +183,28 @@ class MadMachine:
     endpoint = f'{self.base}/v2/home/post/{post_id}/comments'
     return self._get_feed(endpoint, limit, pages)
 
+  # ################### Formatting helpers
+
+  def _prepare_photo_media(self, photo):
+    photo_size = f'{photo["size"]["width"]}x{photo["size"]["height"]}'
+    photo_url = photo['_links']['img']['href'].format(imageSize=photo_size, static=1)
+    quoted_url = quote(photo_url, safe='')
+    mime = photo['mime']
+    name = photo['id']
+
+    return quoted_url, mime, name
+
+  def _prepare_video_media(self, video):
+    video_url = video['_links']['linkTemplate']['href'].format(resolution='original')
+    quoted_url = quote(video_url, safe='')
+    name = video['name']
+
+    return quoted_url, name
+
   def format_post_text(self, post, user_list):
     '''Formats MeWe post object as HTML
     '''
-    base_text = markdown(post['text'])
+    base_text = c.markdown(post.get('text', ''))
     media_text = ''
     link_text = ''
 
@@ -187,39 +215,44 @@ class MadMachine:
       link_title_tag = f'<b>{link_title}</b><br/>' if link_title else ''
       link_url = link['_links']['url']['href']
       link_tag = f'<a href="{link_url}">{link_url}</a><br/>'
-      link_description_tag = markdown(link.get('description',''))
+      link_description = link.get('description', '')
+      link_description_tag = f'<p style="white-space: pre-line">\
+        {link_description}</p><br/>' if link_description else ''
       link_thumbnail = link['_links'].get('thumbnail', {'href': ''})['href']
       link_thumbnail_tag = f'<img src="{link_thumbnail}"></img><br/>' if link_thumbnail else ''
 
-      if link_title_tag:
-        link_text = link_title_tag
+      link_text = link_title_tag if link_title_tag else ''
+      link_text += link_tag
 
-      link_text = link_text + link_tag
+      link_text += link_thumbnail_tag if link_thumbnail_tag else ''
+      link_text += link_description_tag if link_description_tag else ''
 
-      if link_thumbnail_tag:
-        link_text = link_text + link_thumbnail_tag
-      if link_description_tag:
-        link_text = link_text + link_description_tag
+      link_text = f'<blockquote>{link_text}</blockquote>'
 
     # Render post media (e.g. video, GIF or Music)
     if post.get('medias'):
       for media in post['medias']:
-        # Image
-        if media.get('photo'):
-          photo = media['photo']
-          photo_size = f'{photo["size"]["width"]}x{photo["size"]["height"]}'
-          photo_url = photo['_links']['img']['href'].format(imageSize=photo_size, static=1)
-          quoted_url = quote(photo_url, safe='')
-          mime = photo['mime']
-          name = photo['id']
-          media_text = media_text + \
-            f'<img src="{hostname}/proxy?url={quoted_url}&mime={mime}&name={name}"></img><br/>'
+
+        # Video with associated photo object
+        if media.get('video'):
+          p_url, p_mime, p_name = self._prepare_photo_media(media['photo'])
+          v_url, v_name = self._prepare_video_media(media['video'])
+          width = min(media['photo']['size']['width'], 640)
+          media_text += \
+            f'<video width="{width}" height="auto" controls=1'\
+            f'poster="{hostname}/proxy?url={p_url}&mime={p_mime}&name={p_name}"\>'\
+            f'<source src="{hostname}/proxy?url={v_url}&mime=video/mp4&name={v_name}" type="video/mp4" />'\
+            '</video>'
+
+        # Image with no associated video object
+        elif media.get('photo'):
+          url, mime, name = self._prepare_photo_media(media['photo'])
+
+          media_text += f'<img src="{hostname}/proxy?url={url}&mime={mime}&name={name}"></img><br/>'
 
     prepared_post = base_text + '<br/>' if base_text else ''
-    if media_text:
-      prepared_post = prepared_post + media_text
-    if link_text:
-      prepared_post = prepared_post + link_text
+    prepared_post += media_text if media_text else ''
+    prepared_post += link_text if link_text else ''
     return prepared_post
 
 # ###################### Init
@@ -253,32 +286,17 @@ async def conn_check():
     await startup()
 
 
-# ###################### App routes
-@app.route('/history')
-async def retr_history():
-  # Abort shortly on HEAD request to save time
-  if request.method == 'HEAD':
-    return "OK"
-
-  limit = request.args.get('limit', '50')
-  pages = int(request.args.get('pages', '1'))
-
-  feed, users = c.get_feed(limit=limit, pages=pages)
+# ###################### Utils
+def process_feed(feed, users):
+  '''Helper function to iterate over feed object and prepare rss-esque data set
+  '''
   posts = []
-
-  title = f'{c.identity["firstName"]} {c.identity["lastName"]}\'s world feed'
-  info = title
-  link = 'https://mewe.com/'
-  profile_pic = c.identity['_links']['avatar']['href'].format(imageSize='1280x1280')
-  pp_quoted = quote(profile_pic, safe='')
-  avatar = f'{hostname}/proxy?url={pp_quoted}&mime=image/jpeg&name={c.identity["id"]}'
-  build = datetime.now().strftime(r'%Y-%m-%dT%H:%M:%S%z')
-
   for post in feed:
     msg = {}
     msg['text'] = c.format_post_text(post, users)
     msg['author'] = c.resolve_user(post['userId'], users)
     msg['guid'] = f'post["postItemId"]/post["updatedAt"]'
+    msg['categories'] = [x for x in post.get('hashTags', [])]
 
     post_date = datetime.fromtimestamp(post['createdAt'])
     msg['date'] = post_date.strftime(r'%Y-%m-%dT%H:%M:%S%z')
@@ -293,8 +311,64 @@ async def retr_history():
 
     posts.append(msg)
 
+  return(posts)
+
+
+# ###################### App routes
+@app.route('/myworld')
+async def retr_history():
+  # Abort shortly on HEAD request to save time
+  if request.method == 'HEAD':
+    return "OK"
+
+  limit = request.args.get('limit', '50')
+  pages = int(request.args.get('pages', '1'))
+
+  feed, users = c.get_feed(limit=limit, pages=pages)
+  if feed[0].get('error', False):
+    return users['error'], 500
+
+  posts = process_feed(feed, users)
+
+  title = f'{c.identity["firstName"]} {c.identity["lastName"]}\'s world feed'
+  info = title
+  link = 'https://mewe.com/myworld'
+  profile_pic = c.identity['_links']['avatar']['href'].format(imageSize='1280x1280')
+  pp_quoted = quote(profile_pic, safe='')
+  avatar = f'{hostname}/proxy?url={pp_quoted}&mime=image/jpeg&name={c.identity["id"]}'
+  build = datetime.now().strftime(r'%Y-%m-%dT%H:%M:%S%z')
+
   return await render_template(
     'history.html', contents=posts, info=info, title=title, link=link, avatar=avatar, build=build)
+
+
+@app.route('/userfeed/<string:user_id>')
+async def retr_userfeed(user_id):
+  # Abort shortly on HEAD request to save time
+  if request.method == 'HEAD':
+    return "OK"
+
+  limit = request.args.get('limit', '50')
+  pages = int(request.args.get('pages', '1'))
+
+  feed, users = c.get_user_feed(user_id, limit=limit, pages=pages)
+  posts = process_feed(feed, users)
+  user = users[user_id]
+
+  # TODO: Fetch user info here to prepare some nice channel description
+  info = ''
+
+  title = f'{user["name"]}'
+
+  link = f'https://mewe.com/i/{user["contactInviteId"]}'
+  profile_pic = user['_links']['avatar']['href'].format(imageSize='1280x1280')
+  pp_quoted = quote(profile_pic, safe='')
+  avatar = f'{hostname}/proxy?url={pp_quoted}&mime=image/jpeg&name={user["id"]}'
+  build = datetime.now().strftime(r'%Y-%m-%dT%H:%M:%S%z')
+
+  return await render_template(
+    'history.html', contents=posts, info=info, title=title, link=link, avatar=avatar, build=build)
+
 
 @app.route('/proxy')
 def proxy_media():

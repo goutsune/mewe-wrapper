@@ -6,12 +6,12 @@
     <center><img src="{{ avatar|safe }}"/></center>
     <center><a href="{{ link }}">{{ title }}</a></center>
     <center style="white-space: pre-line">{{ info }}</center>
-    <hr><hr>
+    <hr>
     {% for msg in contents %}
+    <hr>
     <b>Date: {{ msg['date'] }}</b> <b>From: {{ msg['author'] }}:</b><br/>
       <i>Title: {{ msg['title']}}</i>
       <p>{{ msg['text']|safe }}</p>
-    <hr/>
     {% endfor %}
   </body>
 </html>
