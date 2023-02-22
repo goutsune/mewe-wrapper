@@ -351,7 +351,7 @@ def process_feed(feed, users):
     msg['author'] = c.resolve_user(post['userId'], users)
     msg['guid'] = f'{post["postItemId"]}/{post["updatedAt"]}'
     msg['categories'] = [x for x in post.get('hashTags', [])]
-    if album := post.get['album']:
+    if album := post.get('album'):
       msg['categories'].insert(0, album)
 
     post_date = datetime.fromtimestamp(post['createdAt'])
