@@ -55,6 +55,9 @@
         URL: <a href="{{msg.content.link.url|safe}}" style="white-space:pre-wrap;">
           {{msg.content.link.url|safe}}
         </a><br/>
+        {% if msg.content.link.title %}
+        <p style="white-space:pre-wrap;"><b>{{msg.content.link.title}}"></b></p>
+        {% endif %}
         {% if msg.content.link.thumb %}
         <img src="{{msg.content.link.thumb|safe}}"></img><br/>
         {% endif %}
