@@ -32,11 +32,10 @@
 
 {% if content.link %}
 <blockquote>
-  {% if content.link.name %}<i>Title: {{content.link.name}}</i><br/>{% endif %}
-  URL: <a href="{{content.link.url|safe}}" style="white-space:pre-wrap;">{{content.link.url|safe}}</a><br/>
-  {% if content.link.title %}<p style="white-space:pre-wrap;"><b>{{content.link.title}}"></b></p>{% endif %}
-  {% if content.link.thumb %}<img src="{{content.link.thumb|safe}}"></img><br/>{% endif %}
-  {% if content.link.text %}<p style="white-space:pre-wrap;">{{content.link.text}}"></p>{% endif %}
+  {% if content.link.title %}<p style="white-space:pre-wrap;"><b>{{content.link.title|safe}}</b></p>{% endif %}
+  <p style="white-space:pre-wrap;">URL: <a href="{{content.link.url|safe}}" style="white-space:pre-wrap;">{{content.link.url|safe}}</a></p>
+  {% if content.link.thumb %}<img src="{{content.link.thumb|safe}}"></img>{% endif %}
+  {% if content.link.text %}<p style="white-space:pre-wrap;">{{content.link.text}}</p>{% endif %}
 </blockquote>
 {% endif %}
 

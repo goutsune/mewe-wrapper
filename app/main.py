@@ -304,7 +304,7 @@ class MadMachine:
     if poll := post.get('poll'):
       message['poll']['text'] = poll['question']
       total_votes = sum([x['votes'] for x in poll['options']])
-      message['poll']['total_votes']
+      message['poll']['total_votes'] = total_votes
       message['poll']['options'] = []
 
       for vote in poll['options']:
