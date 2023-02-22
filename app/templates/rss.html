@@ -14,12 +14,62 @@
   <logo>{{ avatar }}</logo>
   {% for msg in contents %}
   <entry>
-    <content type="html">{{ msg['text'] }}</content>
-    <title>{{ msg['title'] }}</title>
-    <updated>{{ msg['date'] }}</updated>
-    <author><name>{{ msg['author'] }}</name></author>
-    <link href="{{ msg['link'] }}" />
-    <id>{{ msg['guid'] }}</id>
+    <content type="html"><![CDATA[
+      {% if msg.content.text %}
+      {{ msg.content.text|safe }}<br/>
+      {% endif %}
+
+      {% for image in msg.content.images %}
+      <img src="{{image.url|safe}}"></img>
+        {% if image.text %}
+        <i>{{image.text}}</i>
+        {% endif %}
+      {% endfor %}
+
+      {% for video in msg.content.videos %}
+      <video width="{{video.width}}" height="auto" controls=1 poster="{{video.thumb|safe}}">
+        <source src="{{video.url|safe}}" type="video/mp4" />
+      </video><br/>
+      <a href="{{video.url|safe}}">{{video.name}}</a>
+      {% endfor %}
+
+      {% for file in msg.content.files %}
+      <a href="{{file.url|safe}}">{{file.name}}</a>
+      {% endfor %}
+
+      {% if msg.content.poll %}
+      <p>Question: {{msg.content.poll.text}}
+        <ul>
+        {% for option in msg.content.poll.options %}
+          <li>{{option.text}} — {{option.votes}} ({{option.percent}}%)</li>
+        {% endfor %}
+        </ul>
+      </p>
+      {% endif %}
+
+      {% if msg.content.link %}
+      <blockquote>
+        {% if msg.content.link.name %}
+        <i>Title: {{msg.content.link.name}}</i><br/>
+        {% endif %}
+        URL: <a href="{{msg.content.link.url|safe}}" style="white-space:pre-wrap;">
+          {{msg.content.link.url|safe}}
+        </a><br/>
+        {% if msg.content.link.thumb %}
+        <img src="{{msg.content.link.thumb|safe}}"></img><br/>
+        {% endif %}
+        {% if msg.content.link.text %}
+        <p style="white-space:pre-wrap;">{{msg.content.link.text}}"></p>
+        {% endif %}
+      </blockquote>
+      {% endif %}
+
+    ]]></content>
+    <title>{{ msg.title }}</title>
+    <updated>{{ msg.date }}</updated>
+    <author><name>{{ msg.author }}</name></author>
+    <link href="{{ msg.link }}" />
+    <id>{{ msg.guid }}</id>
   </entry>
   {% endfor %}
 </feed>

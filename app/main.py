@@ -77,6 +77,26 @@ class MadMachine:
       print('Warning, unusable session:' + r.json())
       return False
 
+  def reload_session(self):
+    cookie_jar = cookiejar.MozillaCookieJar(cookie_storage)
+    cookie_jar.load(ignore_discard=True, ignore_expires=True)
+    session = Session()
+
+    session.cookies = cookie_jar
+    session.headers['user-agent'] = user_agent
+
+    r = session.get(f'{self.base}/v3/auth/identify')
+    if not r.ok or not r.json().get('authenticated', False):
+      raise ValueError(f'Failed to identify user, are cookies fresh enough? Result: {r.text}')
+
+    try:
+      session.headers['x-csrf-token'] = session.cookies._cookies['.mewe.com']['/']['csrf-token'].value
+    except KeyError:
+      raise KeyError('Failed to extract CSRF token from /identify operation')
+
+    self.identity = session.get(f'{self.base}/v2/me/info').json()
+    self.session = session
+
   def refresh_session(self):
     '''Checks current access token and receive new one accordingly
     '''
@@ -145,9 +165,22 @@ class MadMachine:
       if not page:  # range start from 0 so, eeh
         payload = {'limit': [limit]}
 
+      # TODO: Generalize this providing safe GET method with transparent session realoading
       r = self.session.get(endpoint, params=payload)
       if not r.ok:
-        raise ValueError(r.text)
+        if r.json().get('message', '') == 'Forbidden':
+          try:
+            # Silly retry code, we can do better, but not this time apparently
+            print('Session died, attempting restart')
+            c.reload_session()
+            r = self.session.get(endpoint, params=payload)
+            if not r.ok:
+              print('Failed to reload session')
+              raise ValueError(r.text)
+          except Exception:
+            raise ValueError(r.text)
+        else:
+          raise ValueError(r.text)
 
       page_feed = r.json()['feed']
       page_users_list = r.json()['users']
@@ -199,81 +232,82 @@ class MadMachine:
     mime = photo['mime']
     name = photo['id']
 
-    return quoted_url, mime, name
+    url = f'{hostname}/proxy?url={quoted_url}&mime={mime}&name={name}'
+    return url
 
   def _prepare_video_media(self, video):
     video_url = video['_links']['linkTemplate']['href'].format(resolution='original')
     quoted_url = quote(video_url, safe='')
     name = video['name']
 
-    return quoted_url, name
+    url = f'{hostname}/proxy?url={quoted_url}&mime=video/mp4&name={name}'
+    return url, name
 
-  def format_post_text(self, post, user_list):
+  def prepare_post_message(self, post, user_list):
     '''Formats MeWe post object as HTML
     '''
-    base_text = c.markdown(post.get('text', ''))
-    media_text = ''
-    link_text = ''
-    poll_text = ''
+    message = {}
+    message['text'] = c.markdown(post.get('text', ''))
 
-    # Render post links
+    message['link'] = {}
+    message['poll'] = {}
+    message['repost'] = None
+    message['images'] = []
+    message['videos'] = []
+    message['audios'] = []
+
+    # Link
     if link := post.get('link'):
-      link_title = link.get('title', '')
-      link_title_tag = f'<b>{link_title}</b><br/>' if link_title else ''
-      link_url = link['_links']['url']['href']
-      link_tag = f'<a href="{link_url}">{link_url}</a><br/>'
-      link_description = link.get('description', '')
-      link_description_tag = f'<p style="white-space: pre-line">\
-        {link_description}</p><br/>' if link_description else ''
-      link_thumbnail = link['_links'].get('thumbnail', {'href': ''})['href']
-      link_thumbnail_tag = f'<img src="{link_thumbnail}"></img><br/>' if link_thumbnail else ''
+      message['link']['title'] = link.get('title', '')
+      message['link']['url'] = link['_links']['url']['href']
+      message['link']['text'] = link.get('description', '')
+      # For some reason link thumbnails are stored on sepparated server with full URI, no auth required
+      message['link']['poster'] = link['_links'].get('thumbnail', {'href': ''})['href']
 
-      link_text = link_title_tag if link_title_tag else ''
-      link_text += link_tag
-
-      link_text += link_thumbnail_tag if link_thumbnail_tag else ''
-      link_text += link_description_tag if link_description_tag else ''
-
-      link_text = f'<blockquote>{link_text}</blockquote>'
-
-    # Render post poll
+    # Poll
     if poll := post.get('poll'):
-      poll_text = f'<p>Poll: {poll["question"]}</p><p>Results:</p><ul>'
+      message['poll']['text'] = poll['question']
       total_votes = sum([x['votes'] for x in poll['options']])
+      message['poll']['total_votes']
+      message['poll']['options'] = []
 
       for vote in poll['options']:
-        vote_percent = round(vote['votes'] / total_votes * 100)
-        poll_text += f'<li>{vote["text"]} — {vote["votes"]} ({vote_percent}%)</li>'
+        vote_dict = {}
+        vote_dict['percent'] = round(vote['votes'] / total_votes * 100)
+        vote_dict['votes'] = vote['votes']
+        vote_dict['text'] = vote['text']
 
-      poll_text += '</ul><br/>'
+        message['poll']['options'].append(vote_dict)
 
-    # Render post media (e.g. video or music)
+    # Medias (e.g. video, music, documents)
     if medias := post.get('medias'):
       for media in medias:
 
         # Video with associated photo object
         if video := media.get('video'):
-          p_url, p_mime, p_name = self._prepare_photo_media(media['photo'])
-          v_url, v_name = self._prepare_video_media(video)
-          width = min(media['photo']['size']['width'], 640)
-          media_text += \
-            f'<video width="{width}" height="auto" controls=1'\
-            f'poster="{hostname}/proxy?url={p_url}&mime={p_mime}&name={p_name}"\>'\
-            f'<source src="{hostname}/proxy?url={v_url}&mime=video/mp4&name={v_name}" type="video/mp4" />'\
-            '</video>'
+          video_dict = {}
+          video_dict['thumb'] = self._prepare_photo_media(media['photo'])
+          video_dict['url'], video_dict['name'] = self._prepare_video_media(video)
+          video_dict['width'] = min(media['photo']['size']['width'], 640)
 
-        # Image with no associated video object
-        # TODO: MeWe won't return links to all photo objects in post, so they need to be requested through
-        # mediafeed method
+          message['videos'].append(video_dict)
+
+        # TODO: MeWe won't return links to all photo objects in post,
+        #       so they need to be requested through mediafeed method
+        # Image with no *known* associated media object
         elif photo := media.get('photo'):
-          url, mime, name = self._prepare_photo_media(photo)
-          media_text += f'<img src="{hostname}/proxy?url={url}&mime={mime}&name={name}"></img><br/>'
+          image_dict = {}
+          image_dict['url'] = self._prepare_photo_media(photo)
+          # TODO: Add image captions, need more data
+          image_dict['text'] = ''
 
-    prepared_post = base_text + '<br/>' if base_text else ''
-    prepared_post += poll_text if poll_text else ''
-    prepared_post += media_text if media_text else ''
-    prepared_post += link_text if link_text else ''
-    return prepared_post
+          message['images'].append(image_dict)
+
+    # Referenced message
+    if ref_post := post.get('refPost'):
+      message['repost'] = self.prepare_post_message(ref_post, user_list)
+
+    return message
 
 # ###################### Init
 app = Quart(__name__)
@@ -313,10 +347,12 @@ def process_feed(feed, users):
   posts = []
   for post in feed:
     msg = {}
-    msg['text'] = c.format_post_text(post, users)
+    msg['content'] = c.prepare_post_message(post, users)
     msg['author'] = c.resolve_user(post['userId'], users)
-    msg['guid'] = f'post["postItemId"]/post["updatedAt"]'
+    msg['guid'] = f'{post["postItemId"]}/{post["updatedAt"]}'
     msg['categories'] = [x for x in post.get('hashTags', [])]
+    if album := post.get['album']:
+      msg['categories'].insert(0, album)
 
     post_date = datetime.fromtimestamp(post['createdAt'])
     msg['date'] = post_date.strftime(r'%Y-%m-%dT%H:%M:%S%z')
@@ -389,6 +425,7 @@ async def retr_userfeed(user_id):
   return await render_template(
     'history.html', contents=posts, info=info, title=title, link=link, avatar=avatar, build=build)
 
+
 @app.route('/userfeed_rss/<string:user_id>')
 async def retr_userfeed_rss(user_id):
   # Abort shortly on HEAD request to save time
@@ -415,6 +452,7 @@ async def retr_userfeed_rss(user_id):
 
   return await render_template(
     'rss.html', contents=posts, info=info, title=title, link=link, avatar=avatar, build=build)
+
 
 @app.route('/proxy')
 def proxy_media():
