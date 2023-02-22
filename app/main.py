@@ -66,6 +66,26 @@ class MadMachine:
     access_token = self.session.cookies._cookies['.mewe.com']['/']['access-token']
     return access_token.is_expired()
 
+  def invoke_get(self, endpoint, payload=None):
+    # TODO: Generalize this providing safe GET method with transparent session realoading
+    r = self.session.get(endpoint, params=payload)
+    if not r.ok:
+      if r.json().get('message', '') == 'Forbidden':
+        try:
+          # Silly retry code, we can do better, but not this time
+          print('Session died, attempting restart')
+          c.reload_session()
+          r = self.session.get(endpoint, params=payload)
+          if not r.ok:
+            print('Failed to reload session')
+            raise ValueError(r.text)
+        except Exception:
+          raise ValueError(r.text)
+      else:
+        raise ValueError(r.text)
+
+    return r.json()
+
   def session_ok(self):
     '''Checks if current session is still usable (e.g. no logout occurred due to API abuse or refresh token
     expiry.
@@ -98,7 +118,7 @@ class MadMachine:
     self.session = session
 
   def refresh_session(self):
-    '''Checks current access token and receive new one accordingly
+    '''Checks current access token and receive new one accordingly faster than reloading session alltogether
     '''
     # Force-close last streamed connection in case it is still hogging up session
     if self.last_streamed_response is not None:
@@ -130,10 +150,8 @@ class MadMachine:
     '''Invokes me/info method to update info on current user. Useful to check API usability.
     '''
     self.refresh_session()
-    r = self.session.get(f'{self.base}/v2/me/info')
-    if not r.ok:
-      return {'error': True}
-    return r.json()
+    r = self.invoke_get(f'{self.base}/v2/me/info')
+    return r
 
   @staticmethod
   def resolve_user(user_id, user_list):
@@ -145,10 +163,8 @@ class MadMachine:
     '''Invokes mycontacts/user/{user_id} method to fetch information about a user by their ID, contacts only.
     '''
     self.refresh_session()
-    r = self.session.get(f'{self.base}/v2/mycontacts/user/{user_id}')
-    if not r.ok:
-      raise ValueError(r.text)
-    return r.json()
+    r = self.invoke_get(f'{self.base}/v2/mycontacts/user/{user_id}')
+    return r
 
   def _get_feed(self, endpoint, limit, pages):
     '''Method to loop through pages that return feed objects along with respective users.
@@ -165,27 +181,12 @@ class MadMachine:
       if not page:  # range start from 0 so, eeh
         payload = {'limit': [limit]}
 
-      # TODO: Generalize this providing safe GET method with transparent session realoading
-      r = self.session.get(endpoint, params=payload)
-      if not r.ok:
-        if r.json().get('message', '') == 'Forbidden':
-          try:
-            # Silly retry code, we can do better, but not this time apparently
-            print('Session died, attempting restart')
-            c.reload_session()
-            r = self.session.get(endpoint, params=payload)
-            if not r.ok:
-              print('Failed to reload session')
-              raise ValueError(r.text)
-          except Exception:
-            raise ValueError(r.text)
-        else:
-          raise ValueError(r.text)
+      response = self.invoke_get(endpoint, payload)
 
-      page_feed = r.json()['feed']
-      page_users_list = r.json()['users']
+      page_feed = response['feed']
+      page_users_list = response['users']
 
-      next_link = r.json()['_links'].get('nextPage', {'href': None})['href']
+      next_link = response['_links'].get('nextPage', {'href': None})['href']
 
       # Our usable list will be accessible by user_id
       users = {user['id']: user for user in page_users_list}
@@ -240,13 +241,10 @@ class MadMachine:
       'after': 100,
       'order': 1,}
 
-    res = self.session.get(endpoint, params=payload)
-    if res.ok:
-      response = res.json()
-      medias = [x['medias'][0] for x in response['feed']]
-      users = {user['id']: user for user in response['users']}
-    else:
-      raise Exception('Failed to retrieve media feed')
+    response = self.invoke_get(endpoint, payload)
+
+    medias = [x['medias'][0] for x in response['feed']]
+    users = {user['id']: user for user in response['users']}
 
     return medias, users
 
@@ -518,6 +516,9 @@ def proxy_media():
   name = request.args.get('name')
 
   res = c.session.get(f'https://mewe.com{url}', stream=True)
+  if not res.ok:
+    return res.iter_content(), 500
+
   content_length = res.headers['content-length']
   c.last_streamed_response = res
   return res.iter_content(chunk_size=1024), {
