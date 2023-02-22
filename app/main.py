@@ -57,7 +57,7 @@ class MadMachine:
     # We need custom markdown parser with HeaderProcessor unregistered, so let's store it here.
     # Lets also add hard line breaks while we're ar it.
     markdown_instance = markdown.Markdown(extensions=['nl2br'])
-    markdown_instance.parser.blockprocessors.deregister('hashheader')
+    markdown_instance.parser.blockprocessors.deregister('hashheader')  # breaks hashtags
     self.markdown = markdown_instance.convert
     # TODO: Needs block processor for user links.
     # Example: 'Для \ufeff@{{u_5c25c5da3c8bb1088cb5f62e}Naru Ootori}\ufeff приготовила.'
@@ -67,14 +67,13 @@ class MadMachine:
     return access_token.is_expired()
 
   def invoke_get(self, endpoint, payload=None):
-    # TODO: Generalize this providing safe GET method with transparent session realoading
     r = self.session.get(endpoint, params=payload)
     if not r.ok:
       if r.json().get('message', '') == 'Forbidden':
         try:
           # Silly retry code, we can do better, but not this time
           print('Session died, attempting restart')
-          c.reload_session()
+          self.reload_session()
           r = self.session.get(endpoint, params=payload)
           if not r.ok:
             print('Failed to reload session')
@@ -281,7 +280,7 @@ class MadMachine:
     '''Formats MeWe post object for use with template output.
     '''
     message = {}
-    message['text'] = c.markdown(post.get('text', ''))
+    message['text'] = self.markdown(post.get('text', ''))
 
     message['link'] = {}
     message['poll'] = {}
@@ -326,8 +325,6 @@ class MadMachine:
 
           message['videos'].append(video_dict)
 
-        # TODO: MeWe won't return links to all photo objects in post,
-        #       so they need to be requested through mediafeed method
         # Image with no *known* associated media object
         elif photo := media.get('photo'):
           image_dict = {}
@@ -353,6 +350,48 @@ class MadMachine:
       message['repost']['date'] = repost_date.strftime(r'%d %b %Y %H:%M:%S')
 
     return message
+
+  def prepare_feed(self, user_id, limit=30, pages=1, retrieve_medias=False):
+    '''Helper function to iterate over feed object and prepare rss-esque data set
+    '''
+    posts = []
+    feed, users = self.get_user_feed(user_id, limit=limit, pages=pages)
+
+    for post in feed:
+      # Retrieve extra media elements from post if there are more than 4
+      if post.get('mediasCount', 0) > 4 and retrieve_medias:
+        extra_medias, extra_users = self.get_post_medias(post)
+        post['medias'] = extra_medias  # FIXME: Only fetch remaining objects to save data?
+        users.update(extra_users)
+
+      msg = {}
+      msg['content'] = self.prepare_post_message(post, users)
+      msg['author'] = self.resolve_user(post['userId'], users)
+      msg['guid'] = f'{post["postItemId"]}/{post["updatedAt"]}'
+      msg['categories'] = [x for x in post.get('hashTags', [])]
+      if album := post.get('album'):
+        msg['categories'].insert(0, album)
+
+      post_date = datetime.fromtimestamp(post['createdAt'])
+      msg['date'] = post_date.strftime(r'%Y-%m-%dT%H:%M:%S%z')
+      if post['text'] and len(post['text']) > 60:
+        msg['title'] = post['text'][0:60] + '…'
+      else:
+        msg['title'] = post['text']
+      if not msg['title']:
+        msg['title'] = post_date.strftime(r'%d %b %Y %H:%M:%S')
+
+      msg['link'] = f'{hostname}/viewpost/{post["postItemId"]}'
+
+      posts.append(msg)
+
+    return posts, users
+
+  def prepare_post(self, post_id):
+    '''Prepares post and it's comments into simple dictionary following
+    the same rules as used for feed preparation.
+    '''
+
 
 # ###################### Init
 app = Quart(__name__)
@@ -383,43 +422,6 @@ async def cleanup():
 #  if not c.session_ok():
 #    print("Not connected, reconnecting...")
 #    await startup()
-
-
-# ###################### Utils
-def process_feed(feed, users):
-  '''Helper function to iterate over feed object and prepare rss-esque data set
-  '''
-  posts = []
-
-  for post in feed:
-    # Retrieve extra media elements from post if there are more than 4
-    if post.get('mediasCount', 0) > 4:
-      extra_medias, extra_users = c.get_post_medias(post)
-      post['medias'] = extra_medias  # FIXME: Only fetch remaining objects to save data?
-      users.update(extra_users)
-
-    msg = {}
-    msg['content'] = c.prepare_post_message(post, users)
-    msg['author'] = c.resolve_user(post['userId'], users)
-    msg['guid'] = f'{post["postItemId"]}/{post["updatedAt"]}'
-    msg['categories'] = [x for x in post.get('hashTags', [])]
-    if album := post.get('album'):
-      msg['categories'].insert(0, album)
-
-    post_date = datetime.fromtimestamp(post['createdAt'])
-    msg['date'] = post_date.strftime(r'%Y-%m-%dT%H:%M:%S%z')
-    if post['text'] and len(post['text']) > 60:
-      msg['title'] = post['text'][0:60] + '…'
-    else:
-      msg['title'] = post['text']
-    if not msg['title']:
-      msg['title'] = post_date.strftime(r'%d %b %Y %H:%M:%S')
-
-    msg['link'] = f'{hostname}/viewpost/{post["postItemId"]}'
-
-    posts.append(msg)
-
-  return(posts)
 
 
 # ###################### App routes
@@ -459,8 +461,7 @@ async def retr_userfeed(user_id):
   limit = request.args.get('limit', '50')
   pages = int(request.args.get('pages', '1'))
 
-  feed, users = c.get_user_feed(user_id, limit=limit, pages=pages)
-  posts = process_feed(feed, users)
+  posts, users = c.prepare_feed(user_id, limit=limit, pages=pages, retrieve_medias=True)
   user = users[user_id]
 
   # TODO: Fetch user info here to prepare some nice channel description
@@ -477,6 +478,13 @@ async def retr_userfeed(user_id):
   return await render_template(
     'history.html', contents=posts, info=info, title=title, link=link, avatar=avatar, build=build)
 
+@app.route('/viewpost/<string:post_id>')
+async def show_post(post_id):
+  # Abort shortly on HEAD request to save time
+  if request.method == 'HEAD':
+    return "OK"
+
+
 
 @app.route('/userfeed_rss/<string:user_id>')
 async def retr_userfeed_rss(user_id):
@@ -487,8 +495,7 @@ async def retr_userfeed_rss(user_id):
   limit = request.args.get('limit', '50')
   pages = int(request.args.get('pages', '1'))
 
-  feed, users = c.get_user_feed(user_id, limit=limit, pages=pages)
-  posts = process_feed(feed, users)
+  posts, users = c.prepare_feed(user_id, limit=limit, pages=pages, retrieve_medias=True)
   user = users[user_id]
 
   # TODO: Fetch user info here to prepare some nice channel description
