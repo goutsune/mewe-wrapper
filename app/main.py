@@ -188,7 +188,7 @@ class MadMachine:
       next_link = r.json()['_links'].get('nextPage', {'href': None})['href']
 
       # Our usable list will be accessible by user_id
-      users.update({user['id']: user for user in page_users_list})
+      users = {user['id']: user for user in page_users_list}
       feed.extend(page_feed)
 
       if next_link is None:
@@ -223,6 +223,33 @@ class MadMachine:
     endpoint = f'{self.base}/v2/home/post/{post_id}/comments'
     return self._get_feed(endpoint, limit, pages)
 
+  def get_post_medias(self, post, limit=100):
+    '''Invokes home/user/{user_id}/media request to fetch media from associated post
+    '''
+
+    user_id = post['userId']
+    post_id = post['postItemId']
+    first_media_id = post['medias'][0]['postItemId']
+
+    endpoint = f'{self.base}/v2/home/user/{user_id}/media'
+    payload = {
+      'skipVideos': 0,
+      'postItemId': first_media_id,
+      'before': 0,
+      'multiPostId': post_id,
+      'after': 100,
+      'order': 1,}
+
+    res = self.session.get(endpoint, params=payload)
+    if res.ok:
+      response = res.json()
+      medias = [x['medias'][0] for x in response['feed']]
+      users = {user['id']: user for user in response['users']}
+    else:
+      raise Exception('Failed to retrieve media feed')
+
+    return medias, users
+
   # ################### Formatting helpers
 
   def _prepare_photo_media(self, photo):
@@ -243,8 +270,17 @@ class MadMachine:
     url = f'{hostname}/proxy?url={quoted_url}&mime=video/mp4&name={name}'
     return url, name
 
+  def _prepare_document(self, doc):
+    file_url = doc['_links']['url']['href']
+    quoted_url = quote(file_url, safe='')
+    name = doc['fileName']
+    mime = doc['mime']
+
+    url = f'{hostname}/proxy?url={quoted_url}&mime={mime}&name={name}'
+    return url, name
+
   def prepare_post_message(self, post, user_list):
-    '''Formats MeWe post object as HTML
+    '''Formats MeWe post object for use with template output.
     '''
     message = {}
     message['text'] = c.markdown(post.get('text', ''))
@@ -254,7 +290,7 @@ class MadMachine:
     message['repost'] = None
     message['images'] = []
     message['videos'] = []
-    message['audios'] = []
+    message['files'] = []
 
     # Link
     if link := post.get('link'):
@@ -262,7 +298,7 @@ class MadMachine:
       message['link']['url'] = link['_links']['url']['href']
       message['link']['text'] = link.get('description', '')
       # For some reason link thumbnails are stored on sepparated server with full URI, no auth required
-      message['link']['poster'] = link['_links'].get('thumbnail', {'href': ''})['href']
+      message['link']['thumb'] = link['_links'].get('thumbnail', {'href': ''})['href']
 
     # Poll
     if poll := post.get('poll'):
@@ -279,7 +315,7 @@ class MadMachine:
 
         message['poll']['options'].append(vote_dict)
 
-    # Medias (e.g. video, music, documents)
+    # Medias (e.g. video or photo)
     if medias := post.get('medias'):
       for media in medias:
 
@@ -303,9 +339,20 @@ class MadMachine:
 
           message['images'].append(image_dict)
 
+    # Attachments
+    if files := post.get('files'):
+      for document in files:
+        doc_dict = {}
+        doc_dict['url'], doc_dict['name'] = self._prepare_document(document)
+
+        message['files'].append(doc_dict)
+
     # Referenced message
     if ref_post := post.get('refPost'):
       message['repost'] = self.prepare_post_message(ref_post, user_list)
+      message['repost']['author'] = self.resolve_user(ref_post['userId'], user_list)
+      repost_date = datetime.fromtimestamp(ref_post['createdAt'])
+      message['repost']['date'] = repost_date.strftime(r'%d %b %Y %H:%M:%S')
 
     return message
 
@@ -345,7 +392,14 @@ def process_feed(feed, users):
   '''Helper function to iterate over feed object and prepare rss-esque data set
   '''
   posts = []
+
   for post in feed:
+    # Retrieve extra media elements from post if there are more than 4
+    if post.get('mediasCount', 0) > 4:
+      extra_medias, extra_users = c.get_post_medias(post)
+      post['medias'] = extra_medias  # FIXME: Only fetch remaining objects to save data?
+      users.update(extra_users)
+
     msg = {}
     msg['content'] = c.prepare_post_message(post, users)
     msg['author'] = c.resolve_user(post['userId'], users)

@@ -1,0 +1,46 @@
+{% if content.text %}
+{{ content.text|safe }}<br/>
+{% endif %}
+
+{% for image in content.images %}
+<img src="{{image.url|safe}}"></img>
+  {% if image.text %}
+  <i>{{image.text}}</i>
+  {% endif %}
+{% endfor %}
+
+{% for video in content.videos %}
+<video width="{{video.width}}" height="auto" controls=1 poster="{{video.thumb|safe}}">
+  <source src="{{video.url|safe}}" type="video/mp4" />
+</video><br/>
+<a href="{{video.url|safe}}">{{video.name}}</a>
+{% endfor %}
+
+{% for file in content.files %}
+<a href="{{file.url|safe}}">{{file.name}}</a>
+{% endfor %}
+
+{% if content.poll %}
+<p>Question: {{content.poll.text}}
+  <ul>
+  {% for option in content.poll.options %}
+    <li>{{option.text}} — {{option.votes}} ({{option.percent}}%)</li>
+  {% endfor %}
+  </ul>
+</p>
+{% endif %}
+
+{% if content.link %}
+<blockquote>
+  {% if content.link.name %}<i>Title: {{content.link.name}}</i><br/>{% endif %}
+  URL: <a href="{{content.link.url|safe}}" style="white-space:pre-wrap;">{{content.link.url|safe}}</a><br/>
+  {% if content.link.title %}<p style="white-space:pre-wrap;"><b>{{content.link.title}}"></b></p>{% endif %}
+  {% if content.link.thumb %}<img src="{{content.link.thumb|safe}}"></img><br/>{% endif %}
+  {% if content.link.text %}<p style="white-space:pre-wrap;">{{content.link.text}}"></p>{% endif %}
+</blockquote>
+{% endif %}
+
+{% if content.repost %}
+<i>{{content.repost.author}} posted at {{content.repost.date}}</i>:
+<blockquote>{% with content=content.repost %}{% include "content.html" %}{% endwith %}</blockquote>
+{% endif %}
