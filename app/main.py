@@ -424,7 +424,7 @@ class MadMachine:
     return prepared
 
 
-  def prepare_post_comments(self, post):
+  def prepare_post_comments(self, post, users):
     '''Prepares nested list of comment message objects in a manner similar to prepare_post_message
     '''
     comments = []
@@ -432,7 +432,10 @@ class MadMachine:
     for raw_comment in reversed(post['comments']['feed']):
       comment = {}
       comment['text'] = self.markdown(raw_comment.get('text', ''))
-      comment['user'] = raw_comment['owner']['name']
+      if owner := raw_comment.get('owner'):
+        comment['user'] = owner['name']
+      else:
+        comment['user'] = users[raw_comment['userId']]['name']
       comment['id'] = raw_comment['id']
       comment_date = datetime.fromtimestamp(raw_comment['createdAt'])
       comment['date'] = comment_date.strftime(r'%d %b %Y %H:%M:%S')
@@ -455,13 +458,16 @@ class MadMachine:
 
     # Load up to 500 comments from the post
     # TODO: Also load comment replies
-    if load_all_comments and len(post['comments']['feed']) < post['comments']['total']:
+    if post.get('comments') \
+     and load_all_comments \
+     and len(post['comments']['feed']) < post['comments']['total']:
       response = self.get_post_comments(post_id, limit=500)
       post['comments']['feed'] = response['feed']
 
     prepared_post = self.prepare_post_message(post, users)
     # Message schema is a bit different for comments, so we can't just reuse prepare_post_message
-    prepared_post['comments'] = self.prepare_post_comments(post)
+    if post.get('comments'):
+      prepared_post['comments'] = self.prepare_post_comments(post, users)
     prepared_post['author'] = users[post['userId']]['name']
     prepared_post['id'] = post_id
     post_date = datetime.fromtimestamp(post['createdAt'])
