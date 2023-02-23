@@ -1,0 +1,517 @@
+body { margin: 0; padding: 8px; margin-bottom: auto; }
+div.post { margin: 12px 40px; }
+form { margin-bottom: 0px }
+form .trap { display:none }
+.hidevideo {padding: 2px 20px;}
+.postarea { text-align: center }
+.postarea table { margin: 0px auto; text-align: left }
+.thumb { border: none; float: left; margin: 2px 20px }
+.nothumb { float: left; background: #eee; border: 2px dashed #aaa; text-align: center; margin: 2px 20px; padding: 1em 0.5em 1em 0.5em; }
+.reflink a { color: inherit; text-decoration: none }
+.reply .filesize { margin-left: 20px }
+.userdelete { float: right; text-align: center; white-space: nowrap }
+.replypage .replylink { display: none }
+
+.adminbar select {
+    margin-top: 5px;
+}
+.imglink {
+	/*float:left;*/
+	/* margin:2px 20px; */
+}
+
+.catthread {
+	vertical-align: top;
+	word-wrap: break-word;
+	overflow: hidden;
+	display:inline-block;
+	padding: 4px;
+	width:210px;
+	max-height:350px;
+	min-height:200px;
+	margin-top: 5px;
+	position: relative;
+}
+.catthread a {text-decoration: none; !important;}
+.catthread img {border:none; float: unset;}
+.catthreadlist    {
+	padding: 20px 0px;
+	text-align: center;
+}
+.image {
+vertical-align: top;
+align-content: center;
+border: 1px dotted;
+word-wrap: break-word;
+overflow: hidden;
+display:inline-block;
+padding: 4px;
+width:210px;
+max-height:400px;
+min-height:250px;
+margin-top: 5px;
+position: relative;
+}
+.imageaction {
+	margin: 0 auto;
+    position: absolute;
+	display: inline-block;
+    bottom: 2px;
+}
+.selected {
+	font-weight: bolder;
+	border: solid 1px;
+	background: darkgreen;
+	color: white;
+	font-variant: small-caps;
+}
+
+.postnum {
+	vertical-align: 1px;
+	font-size: 13px;
+	color: #707070;
+	cursor: default;
+	margin-right: 5px;
+}
+
+.mainpagecntnr {
+        text-align: center;
+        border-bottom: 1px solid !important;
+        padding-bottom: 4px;
+    }
+
+.mainpagelinks , .newscntnr {
+        display: inline-block;
+        max-width: 45%;
+        vertical-align: top;
+        position: relative;
+        overflow: hidden;
+        padding: 4px;
+	}
+
+.featurecntnr {
+      text-align: center;
+}
+
+.greeting {
+    text-align: center;
+    display: inline-block;
+    max-width: 20%;
+    font-size: 0.8em;
+}
+
+.greeting img {
+        max-width: 100%;
+        max-height: unset;
+        height: auto;
+    }
+
+.newscntnr {
+        text-align: left;
+    }
+
+.newscntnr table {
+        text-align: center;
+        border: none;
+    }
+
+.mainpagelinks {
+  text-align:left;
+}
+
+.mainpagelinks li {
+    font-size: 1.2em;
+    padding: 1px;
+}
+
+.mainpagelinks ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+
+.mnpglnkcolumn {
+    text-align: left;
+    display: inline-block;
+    float: none;
+    vertical-align: top;
+    width:17em;
+}
+
+.navbar {
+    padding: 5px;
+}
+
+.topmenu {
+    top: 0px;
+    left: 0px;
+    width: 100%;
+    z-index: 9000;
+    height: inherit;
+    position: sticky;
+    clear: both;
+    overflow: hidden;
+    border-bottom: 1px solid;
+}
+
+.adminbar {
+    text-align: right;
+    clear: both;
+    float: right;
+}
+
+.svg-icon {
+    fill: inherit;
+}
+
+.icon-32 {
+    width: 32px;
+    height: 32px;
+}
+
+.icon {
+    vertical-align: top;
+}
+
+@media only screen and (max-width: 480px) {
+	html {
+		text-size-adjust:100%;
+		-moz-text-size-adjust:100%;
+		-webkit-text-size-adjust:100%;
+		-ms-text-size-adjust:100%;
+	}
+
+	html, body {
+		background:#FFFFEE;
+		color:#800000;
+		font-family: Times New Roman,serif;
+		font-size:8pt;
+		max-width:100%!important;
+	}
+
+  projlist {
+    margin-top:80px;
+    font-size:8pt;
+  }
+
+	a {
+		color:#0000EE;
+		font-size:11pt;
+	}
+
+	a:hover {
+		color:#DD0000;
+	}
+
+	.reflink{
+		clear:both;
+		text-align:right;
+	}
+
+	.adminbar {
+		text-align:right;
+		clear:both;
+		background:inherit;
+		float:right;
+	}
+
+	.logo {
+		clear:right;
+		text-align:center;
+		font-size:20pt;
+		color:#800000;
+		width:100%;
+		vertical-align:center;
+	}
+
+	.theader {
+		background:#E04000;
+		text-align:center;
+		padding:2px;
+		color:#FFFFFF;
+		width:100%;
+	}
+
+	.postarea table {
+		margin:0;
+		width:100%;
+	}
+
+	.rules {
+		display:none;
+	}
+
+	.rules li {
+		display:none;
+	}
+
+	.postblock {
+		background:#EEAA88;
+		color:#800000;
+		font-weight:800;
+	}
+
+	.footer {
+		display:none;
+	}
+
+	.passvalid {
+		background:#EEAA88;
+		text-align:center;
+		width:100%;
+		color:#ffffff;
+	}
+
+	.dellist {
+		font-weight: bold;
+		text-align:center;
+	}
+
+	.delbuttons {
+		text-align:center;
+		padding-bottom:4px;
+
+	}
+
+	.managehead {
+		background:#AAAA66;
+		color:#400000;
+		padding:0px;
+	}
+
+	.postlists {
+		background:#FFFFFF;
+		width:100%;
+		padding:0px;
+		color:#800000;
+	}
+
+	.row1 {
+		background:#EEEECC;
+		color:#090E00;
+	}
+
+	.row2 {
+		background:#DDDDAA;
+		color:#090E00;
+	}
+
+	.unkfunc {
+		background:inherit;
+		color:#789922;
+	}
+
+	.filesize {
+		text-decoration:none;
+		font-family:sans-serif;
+		font-size: 5pt !important;
+	}
+
+	.filetitle {
+		background:inherit;
+		color:#CC1105;
+		font-weight:800;
+		white-space: -moz-pre-wrap !important;  /* Mozilla, since 1999 */
+		white-space: -pre-wrap;      /* Opera 4-6 */
+		white-space: -o-pre-wrap;    /* Opera 7 */
+		white-space: pre-wrap;       /* css-3 */
+		word-wrap: break-word;       /* Internet Explorer 5.5+ */
+		word-break: break-all;
+		white-space: normal;
+		overflow: hidden!important;
+		width:100%!important;
+	}
+
+	.postername {
+		color:#117743;
+	}
+
+	.postertrip {
+		color:#228854;
+	}
+
+	.oldpost {
+		color:#CC1105;
+		font-weight:800;
+	}
+
+	.omittedposts {
+		color:#707070;
+		clear:both!important;
+	}
+
+	.reply {
+		background: #F0E0D6;
+		color: #800000;
+		width:100%!important;
+		clear:both;
+		padding:0px!important;
+		margin-left:4px!important;
+		display:table;
+		min-width: 0;
+	}
+	.replyhl {
+		background: #FFECB2;
+		color: #090E00;
+	}
+
+	.doubledash {
+		display:none;
+	}
+
+	.replytitle {
+		font-size: 1.5em;	color:#CC1105;
+		font-weight:800;
+	}
+
+	.commentpostername {
+		color:#117743;
+		font-weight:800;
+	}
+
+	.thumbnailmsg {
+		font-size: small;
+		color:#800000;
+	}
+
+	.abbrev {
+		color:#707070;
+		font-size:8pt;
+	}
+
+	.highlight {
+		background: #F0E0D6;	color:#800000;
+		border: 2px dashed #EEAA88;
+	}
+
+	.reflinkpreview {
+		background: #FFECB2 !important;
+	}
+	.userdelete table tr td {
+		border: 1px solid #F9E0A8;
+
+
+	}
+	table {
+		border-style: none;
+
+	}
+	button {
+	border: 1px solid #F9E0A8;
+
+	 background-color: #FFECB2;
+	}
+	textarea {
+		width:70%!important;
+		margin: 0px;
+		margin-right: 2px;
+		padding: 2px 4px 3px 4px;
+		border: 1px solid #AAA;
+		outline: none;
+		font-size: 10pt;
+	}
+	input[type=file]{
+		width:70%!important;;
+	}
+
+	input[type=text], input[type=password] {
+		margin: 0px;
+		margin-right: 2px;
+		padding: 2px 4px 3px 4px;
+		border: 1px solid #AAA;
+		outline: none;
+		font-size: 10pt;
+		width:40%!important;
+	}
+
+	hr {
+		border-style: solid none none none;
+		border-width: 1px;
+		border-color: #555;
+	}
+
+
+	.reply div.post, div.post :last-child {
+		margin-bottom: 0em;
+	}
+
+
+	img {
+		max-width:80px;
+		max-height:80px;
+	}
+	.thumb {
+		width:auto;
+		height:auto;
+		margin: 2px 4px;
+	}
+
+	div.post{
+		padding:
+		font-size:10pt;
+		max-width:100%!important;
+		height:auto!important;
+		display:block!important;
+		margin: 12px 40px !important;
+		width:100%!important;
+	}
+	.filesize a{
+		font-size:10pt;
+	}
+
+	.nothumb {
+		float: left;
+		background: #eee;
+		border: 2px dashed #aaa;
+		text-align: center;
+		margin: 2px 4px;
+		padding: 1em 0.5em 1em 0.5em;
+	}
+
+	.reply pre, a{
+		white-space: -moz-pre-wrap !important;  /* Mozilla, since 1999 */
+		white-space: -pre-wrap;      /* Opera 4-6 */
+		white-space: -o-pre-wrap;    /* Opera 7 */
+		white-space: pre-wrap;       /* css-3 */
+		word-wrap: break-word;       /* Internet Explorer 5.5+ */
+		word-break: break-all;
+		white-space: normal;
+	}
+
+	div [id*="replies"]{
+		clear:both;
+		padding:0px!important;
+	}
+	div [id*="thread"]{
+		clear:both;
+		max-width:100%!important;
+		margin:0px;
+		padding:0px!important;
+	}
+
+	input[name="deletepost"]{
+		clear:right;
+	}
+
+	.userdelete {
+	    text-align:left;
+	    white-space:normal;
+	}
+
+	.banner {
+		display: none;
+	}
+
+  .mainpagelinks li {
+    font-size: 11pt;
+    padding: 2px;
+  }
+
+  .greeting {
+    font-size: 8pt;
+  }
+
+  .greeting a {
+    font-size: 8pt;
+  }
+}

@@ -1,0 +1,115 @@
+<html>
+ <head>
+  <title>MeWeちゃん — {{post.author}}</title>
+  <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="stylesheet" type="text/css" href="/static/global.css">
+  <link rel="stylesheet" type="text/css" href="/static/gurochan.css" title="Gurochan">
+ </head>
+ <body class="replypage">
+  <div class="logo">
+   <img class="banner" alt="" src="/static/logo.png" width="300" height="100"><br>
+   MeWeちゃん — {{post.author}}
+  </div>
+  <hr>
+
+  <div class="postarea">
+   <form id="postform" action="/post/" method="post" enctype="multipart/form-data">
+    <input type="hidden" name="task" value="post">
+    <input type="hidden" name="parent" value="{{post_id}}">
+    <input type="hidden" name="nya1">
+    <table width="1%">
+     <tbody>
+      <tr>
+        <td class="postblock">Тема</td>
+        <td>
+          <input type="text" name="nya3" size="35">
+          <input type="submit" value="Отправить">
+        </td>
+      </tr>
+      <tr>
+        <td class="postblock">Сообщение</td>
+        <td>
+          <textarea name="nya4" cols="60" rows="6"></textarea>
+        </td>
+      </tr>
+      <tr>
+       <td class="postblock">Файл</td>
+       <td><input type="file" name="file" size="35"></td>
+      </tr>
+     </tbody>
+    </table>
+   </form>
+  </div>
+  <hr>
+  <form id="delform" action="/post" method="post">
+   <div id="thread-{{post.id}}">
+    <span class="filesize">
+    {% if post.images %}
+      <a target="_blank" href="{{post.images[0].url}}">Image name</a> - (<em>Image size</em>)
+    {% endif %}
+    </span>
+    <br>
+    {% if post.images %}
+    <a target="_blank" href="{{post.images[0].url}}" class="imglink">
+     <img src="{{post.images[0].thumb}}" width="200" height="auto" class="thumb">
+    </a>
+    {% endif %}
+    <a name="{{post.id}}">
+    </a>
+    <label>
+     <span class="filetitle"></span>
+     <span class="postername">{{post.author}}</span>
+     {{post.date}}
+    </label>
+    <span class="reflink"><a href="javascript:insert(&#39;&gt;&gt;{{id}}&#39;)">№{{id}}</a></span>
+    <span class="postnum">#OP</span>
+    <div class="post">{{post.text|safe}}</div>
+    {% for comment in post.comments %}
+    <table><tbody>
+      <tr>
+        <td class="doubledash">&gt;&gt;</td>
+        <td class="reply" id="reply{{comment.id}}">
+         <a name="{{comment.id}}"></a>
+         <label>
+          <input type="checkbox" name="delete" value="{{comment.id}}">
+          <span class="replytitle"></span>
+          <span class="commentpostername">{{comment.user}}</span>
+          {{comment.date}}
+         </label>
+         <span class="reflink"><a href="javascript:insert(&#39;&gt;&gt;{{comment.id}}&#39;)">№{{comment.id}}</a></span>
+         <span class="postnum">#C</span>
+         <br>
+         {% if comment.photo %}
+         <span class="filesize">
+           <a target="_blank" href="{{comment.photo.url}}">{{comment.photo.name}}</a> -
+           (<em>Image size</em>)
+         </span>
+         <br>
+         <a target="_blank" href="{{comment.photo.url}}" class="imglink">
+          <img src="{{comment.photo.thumb}}" width="auto" height="200" alt="{{comment.photo.name}}" class="thumb">
+         </a>
+         {% endif %}
+         <div class="post">{{comment.text|safe}}</div>
+        </td>
+      </tr>
+    </tbody></table>
+    {% endfor %}
+   </div>
+   <!--thread-->
+   <br clear="left">
+   <hr>
+  </form>
+
+  <div class="adminbar">[ This space was intentionally left empty ]</div>
+  <p class="footer">
+   -
+   <a href="#">Quart</a>
+   +
+   <a href="#">Ass-hands</a>
+   +
+   <a target="_blank" href="https://e-hentai.org/?f_cats=1017&f_search=futanari">Futanari doujins</a>
+   -
+  </p>
+ </body>
+</html>

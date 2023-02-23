@@ -74,14 +74,16 @@ class MadMachine:
           # Silly retry code, we can do better, but not this time
           print('Session died, attempting restart')
           self.reload_session()
+
           r = self.session.get(endpoint, params=payload)
           if not r.ok:
-            print('Failed to reload session')
-            raise ValueError(r.text)
-        except Exception:
-          raise ValueError(r.text)
+            print()
+            raise ValueError(f'Failed to invoke request after reload: {r.text}')
+
+        except Exception as e:
+          raise ValueError(f'Failed reload session: {e}')
       else:
-        raise ValueError(r.text)
+        raise ValueError(f'Failed to invoke request: {r.text}')
 
     return r.json()
 
@@ -165,7 +167,7 @@ class MadMachine:
     r = self.invoke_get(f'{self.base}/v2/mycontacts/user/{user_id}')
     return r
 
-  def _get_feed(self, endpoint, limit, pages):
+  def _get_feed(self, endpoint, limit=None, pages=1):
     '''Method to loop through pages that return feed objects along with respective users.
     For the time being at least 4 endpoints return that type:
       Main feed, Group feed, User feed, Post comments (lol)
@@ -174,10 +176,11 @@ class MadMachine:
 
     feed = []
     users = {}  # We'll store users in a dictionary for convenience
+    payload = {}
 
     for page in range(pages):
       # We'll loop through requested number of pages filling global feed/users objects here.
-      if not page:  # range start from 0 so, eeh
+      if not page and limit:  # range start from 0 so, eeh
         payload = {'limit': [limit]}
 
       response = self.invoke_get(endpoint, payload)
@@ -195,7 +198,8 @@ class MadMachine:
         break
 
       payload = p.parse_qs(p.urlsplit(next_link).query)
-      payload['limit'] = [limit]
+      if limit:
+        payload['limit'] = [limit]
 
     return feed, users
 
@@ -212,16 +216,19 @@ class MadMachine:
     return self._get_feed(endpoint, limit, pages)
 
   def get_post(self, post_id):
-    '''Invokes home/post/{post_id} method to fetch single post
+    '''Invokes home/post/{post_id} method to fetch single post.
     '''
     endpoint = f'{self.base}/v2/home/post/{post_id}'
-    return self._get_feed(endpoint, limit, pages)
+    return self.invoke_get(endpoint)
 
   def get_post_comments(self, post_id, limit=100, pages=1):
     '''Invokes home/post/{post_id}/comments method to fetch single user posts
     '''
     endpoint = f'{self.base}/v2/home/post/{post_id}/comments'
-    return self._get_feed(endpoint, limit, pages)
+    payload = {'maxResults': limit}
+    self.refresh_session()
+
+    return self.invoke_get(endpoint, payload)
 
   def get_post_medias(self, post, limit=100):
     '''Invokes home/user/{user_id}/media request to fetch media from associated post
@@ -237,7 +244,7 @@ class MadMachine:
       'postItemId': first_media_id,
       'before': 0,
       'multiPostId': post_id,
-      'after': 100,
+      'after': limit,
       'order': 1,}
 
     response = self.invoke_get(endpoint, payload)
@@ -249,9 +256,12 @@ class MadMachine:
 
   # ################### Formatting helpers
 
-  def _prepare_photo_media(self, photo):
+  def _prepare_photo_media(self, photo, thumb=False):
     photo_size = f'{photo["size"]["width"]}x{photo["size"]["height"]}'
-    photo_url = photo['_links']['img']['href'].format(imageSize=photo_size, static=0)
+    if thumb:
+      photo_url = photo['_links']['img']['href'].format(imageSize='400x400', static=1)
+    else:
+      photo_url = photo['_links']['img']['href'].format(imageSize=photo_size, static=0)
     quoted_url = quote(photo_url, safe='')
     mime = photo['mime']
     name = photo['id']
@@ -329,6 +339,7 @@ class MadMachine:
         elif photo := media.get('photo'):
           image_dict = {}
           image_dict['url'] = self._prepare_photo_media(photo)
+          image_dict['thumb'] = self._prepare_photo_media(photo, thumb=True)
           # TODO: Add image captions, need more data
           image_dict['text'] = ''
 
@@ -387,10 +398,75 @@ class MadMachine:
 
     return posts, users
 
-  def prepare_post(self, post_id):
+  def _prepare_comment_photo(self, photo):
+    prepared = {}
+
+    url_template = photo['_links']['img']['href']
+    mime = photo['mime']
+    if mime == 'image/jpeg':
+      name = f'{photo["id"]}.jpg'
+    elif mime == 'image/png':
+      name = f'{photo["id"]}.png'
+    elif mime == 'image/gif':
+      name = f'{photo["id"]}.gif'
+    elif mime == 'image/webp':
+      name = f'{photo["id"]}.webp'
+    else:
+      name = photo['id']
+
+    prepared_url = url_template.format(imageSize=f'{photo["size"]["width"]}x{photo["size"]["height"]}')
+    prepared_thumb = url_template.format(imageSize='400x400')
+
+    prepared['url'] = f'{hostname}/proxy?url={prepared_url}&mime={mime}&name={name}'
+    prepared['thumb'] = f'{hostname}/proxy?url={prepared_thumb}&mime={mime}&name={name}'
+    prepared['name'] = name
+
+    return prepared
+
+
+  def prepare_post_comments(self, post):
+    '''Prepares nested list of comment message objects in a manner similar to prepare_post_message
+    '''
+    comments = []
+    # Comments seem to arrive in date-descending order
+    for raw_comment in reversed(post['comments']['feed']):
+      comment = {}
+      comment['text'] = self.markdown(raw_comment.get('text', ''))
+      comment['user'] = raw_comment['owner']['name']
+      comment['id'] = raw_comment['id']
+      comment_date = datetime.fromtimestamp(raw_comment['createdAt'])
+      comment['date'] = comment_date.strftime(r'%d %b %Y %H:%M:%S')
+      comment['timestamp'] = raw_comment['createdAt']
+      if photo_obj := raw_comment.get('photo'):
+        comment['photo'] = self._prepare_comment_photo(photo_obj)
+
+      comments.append(comment)
+
+    return comments
+
+
+  def prepare_single_post(self, post_id, load_all_comments=False):
     '''Prepares post and it's comments into simple dictionary following
     the same rules as used for feed preparation.
     '''
+    response = self.get_post(post_id)
+    post = response['post']
+    users = {user['id']: user for user in response['users']}
+
+    # Load up to 500 comments from the post
+    # TODO: Also load comment replies
+    if load_all_comments and len(post['comments']['feed']) < post['comments']['total']:
+      response = self.get_post_comments(post_id, limit=500)
+      post['comments']['feed'] = response['feed']
+
+    prepared_post = self.prepare_post_message(post, users)
+    # Message schema is a bit different for comments, so we can't just reuse prepare_post_message
+    prepared_post['comments'] = self.prepare_post_comments(post)
+    prepared_post['author'] = users[post['userId']]['name']
+    prepared_post['id'] = post_id
+    post_date = datetime.fromtimestamp(post['createdAt'])
+    prepared_post['date'] = post_date.strftime(r'%d %b %Y %H:%M:%S')
+    return prepared_post
 
 
 # ###################### Init
@@ -484,6 +560,9 @@ async def show_post(post_id):
   if request.method == 'HEAD':
     return "OK"
 
+  post = c.prepare_single_post(post_id, load_all_comments=True)
+  #return post
+  return await render_template('wakaba.html', post=post)
 
 
 @app.route('/userfeed_rss/<string:user_id>')
