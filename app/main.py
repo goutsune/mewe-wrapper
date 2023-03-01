@@ -1,16 +1,13 @@
-import asyncio
 import markdown
 from datetime import datetime
 from http import cookiejar
-from hypercorn.asyncio import serve
-from hypercorn import Config
-from quart import Quart, Response, render_template, request, abort
+from flask import Flask, Response, render_template, request, abort
 from requests import Session, get, post
 from requests.utils import quote
 from time import sleep
 from urllib import parse as p
 
-from config import cookie_storage, listen_hosts, user_agent, hostname
+from config import cookie_storage, host, port, user_agent, hostname
 
 
 class MadMachine:
@@ -63,8 +60,9 @@ class MadMachine:
     # Example: 'Для \ufeff@{{u_5c25c5da3c8bb1088cb5f62e}Naru Ootori}\ufeff приготовила.'
 
   def is_token_expired(self):
-    access_token = self.session.cookies._cookies['.mewe.com']['/']['access-token']
-    return access_token.is_expired()
+
+    access_token = self.session.cookies._cookies['.mewe.com']['/'].get('access-token')
+    return access_token and access_token.is_expired()
 
   def invoke_get(self, endpoint, payload=None):
     r = self.session.get(endpoint, params=payload)
@@ -101,34 +99,32 @@ class MadMachine:
   def reload_session(self):
     cookie_jar = cookiejar.MozillaCookieJar(cookie_storage)
     cookie_jar.load(ignore_discard=True, ignore_expires=True)
-    session = Session()
 
-    session.cookies = cookie_jar
-    session.headers['user-agent'] = user_agent
+    self.session.cookies = cookie_jar
 
-    r = session.get(f'{self.base}/v3/auth/identify')
+    r = self.session.get(f'{self.base}/v3/auth/identify')
     if not r.ok or not r.json().get('authenticated', False):
       raise ValueError(f'Failed to identify user, are cookies fresh enough? Result: {r.text}')
 
     try:
-      session.headers['x-csrf-token'] = session.cookies._cookies['.mewe.com']['/']['csrf-token'].value
+      self.session.headers['x-csrf-token'] = self.session.cookies._cookies['.mewe.com']['/']['csrf-token'].value
     except KeyError:
       raise KeyError('Failed to extract CSRF token from /identify operation')
 
-    self.identity = session.get(f'{self.base}/v2/me/info').json()
-    self.session = session
+    self.identity = self.session.get(f'{self.base}/v2/me/info').json()
 
   def refresh_session(self):
     '''Checks current access token and receive new one accordingly faster than reloading session alltogether
     '''
-    # Force-close last streamed connection in case it is still hogging up session
-    if self.last_streamed_response is not None:
-      self.last_streamed_response.close()
-      self.last_streamed_response = None
 
     if not self.is_token_expired():
       self.session.cookies.save(ignore_discard=True, ignore_expires=True)
       return
+
+    # Force-close last streamed connection in case it is still hogging up session
+    if self.last_streamed_response is not None:
+      self.last_streamed_response.close()
+      self.last_streamed_response = None
 
     r = self.session.get(f'{self.base}/v3/auth/identify')
 
@@ -378,7 +374,7 @@ class MadMachine:
       msg = {}
       msg['content'] = self.prepare_post_message(post, users)
       msg['author'] = self.resolve_user(post['userId'], users)
-      msg['guid'] = f'{post["postItemId"]}/{post["updatedAt"]}'
+      msg['guid'] = f'{post["postItemId"]}'
       msg['categories'] = [x for x in post.get('hashTags', [])]
       if album := post.get('album'):
         msg['categories'].insert(0, album)
@@ -476,12 +472,11 @@ class MadMachine:
 
 
 # ###################### Init
-app = Quart(__name__)
+app = Flask(__name__)
 
 
 # ###################### Quart setup
-@app.before_serving
-async def startup():
+def startup():
   '''Check user session via cookies here, perhaps fetch new token
   '''
   print("Connecting...")
@@ -489,8 +484,7 @@ async def startup():
   c = MadMachine()
 
 
-@app.after_serving
-async def cleanup():
+def cleanup():
   '''prepare tokens
   '''
   print("Disconnecting...")
@@ -498,17 +492,17 @@ async def cleanup():
 
 
 #@app.before_request
-#async def conn_check():
+#def conn_check():
 #  '''Fetch new token and perhaps update refresh token here
 #  '''
 #  if not c.session_ok():
 #    print("Not connected, reconnecting...")
-#    await startup()
+#    startup()
 
 
 # ###################### App routes
 @app.route('/myworld')
-async def retr_history():
+def retr_history():
   # Abort shortly on HEAD request to save time
   if request.method == 'HEAD':
     return "OK"
@@ -530,12 +524,12 @@ async def retr_history():
   avatar = f'{hostname}/proxy?url={pp_quoted}&mime=image/jpeg&name={c.identity["id"]}'
   build = datetime.now().strftime(r'%Y-%m-%dT%H:%M:%S%z')
 
-  return await render_template(
+  return render_template(
     'history.html', contents=posts, info=info, title=title, link=link, avatar=avatar, build=build)
 
 
 @app.route('/userfeed/<string:user_id>')
-async def retr_userfeed(user_id):
+def retr_userfeed(user_id):
   # Abort shortly on HEAD request to save time
   if request.method == 'HEAD':
     return "OK"
@@ -557,22 +551,22 @@ async def retr_userfeed(user_id):
   avatar = f'{hostname}/proxy?url={pp_quoted}&mime=image/jpeg&name={user["id"]}'
   build = datetime.now().strftime(r'%Y-%m-%dT%H:%M:%S%z')
 
-  return await render_template(
+  return render_template(
     'history.html', contents=posts, info=info, title=title, link=link, avatar=avatar, build=build)
 
 @app.route('/viewpost/<string:post_id>')
-async def show_post(post_id):
+def show_post(post_id):
   # Abort shortly on HEAD request to save time
   if request.method == 'HEAD':
     return "OK"
 
   post = c.prepare_single_post(post_id, load_all_comments=True)
   #return post
-  return await render_template('wakaba.html', post=post)
+  return render_template('wakaba.html', post=post)
 
 
 @app.route('/userfeed_rss/<string:user_id>')
-async def retr_userfeed_rss(user_id):
+def retr_userfeed_rss(user_id):
   # Abort shortly on HEAD request to save time
   if request.method == 'HEAD':
     return "OK"
@@ -594,7 +588,7 @@ async def retr_userfeed_rss(user_id):
   avatar = f'{hostname}/proxy?url={pp_quoted}&mime=image/jpeg&name={user["id"]}'
   build = datetime.now().strftime(r'%Y-%m-%dT%H:%M:%S%z')
 
-  return await render_template(
+  return render_template(
     'rss.html', contents=posts, info=info, title=title, link=link, avatar=avatar, build=build)
 
 
@@ -619,11 +613,7 @@ def proxy_media():
      'Content-Disposition': f'inline; filename={name}'}
 
 # ###################### Webserver init
-async def main():
-  config = Config()
-  config.bind = listen_hosts
-  await serve(app, config)
-
-if __name__ == '__main__':
-  loop = asyncio.get_event_loop()
-  loop.run_until_complete(main())
+if __name__ == "__main__":
+  startup()
+  app.run(debug=True, host=host, port=port, use_reloader=False)
+  cleanup()
