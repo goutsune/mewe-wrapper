@@ -473,8 +473,7 @@ class Mewe:
     users = {user['id']: user for user in response['users']}
 
     # Load up to 500 comments from the post
-    if post.get('comments') and load_all_comments \
-     and len(post['comments']['feed']) < post['comments']['total']:
+    if post.get('comments') and load_all_comments:
       response = self.get_post_comments(post_id, limit=500)
 
       # Let's iterate over that response body some more and fill in comment replies if there are any
