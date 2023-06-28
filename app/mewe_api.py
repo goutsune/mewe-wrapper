@@ -3,6 +3,7 @@ from datetime import datetime
 from http import cookiejar
 from requests import Session, get, post
 from requests.utils import quote
+from threading import Lock
 from urllib import parse as p
 
 from config import cookie_storage, user_agent, hostname
@@ -20,6 +21,7 @@ class Mewe:
   base = 'https://mewe.com/api'
   markdown = None
   last_streamed_response = None
+  refresh_lock = None
 
   def __init__(self):
     '''Things to do:
@@ -57,8 +59,9 @@ class Mewe:
     # TODO: Needs block processor for user links.
     # Example: 'Для \ufeff@{{u_5c25c5da3c8bb1088cb5f62e}Naru Ootori}\ufeff приготовила.'
 
-  def is_token_expired(self):
+    self.refresh_lock = Lock()
 
+  def is_token_expired(self):
     access_token = self.session.cookies._cookies['.mewe.com']['/'].get('access-token')
     return access_token and access_token.is_expired()
 
@@ -115,8 +118,13 @@ class Mewe:
     '''Checks current access token and receive new one accordingly faster than reloading session alltogether
     '''
 
+    if self.refresh_lock.locked():
+      print("Waiting for session refresh to finish")
+
+    self.refresh_lock.acquire()
     if not self.is_token_expired():
       self.session.cookies.save(ignore_discard=True, ignore_expires=True)
+      self.refresh_lock.release()
       return
 
     # Force-close last streamed connection in case it is still hogging up session
@@ -127,6 +135,7 @@ class Mewe:
     r = self.session.get(f'{self.base}/v3/auth/identify')
 
     if not r.ok or not r.json().get('authenticated', False):
+      self.refresh_lock.release()
       raise ConnectionError('Failed to identify user, are cookies fresh enough?')
 
     try:
@@ -134,12 +143,15 @@ class Mewe:
         self.session.cookies._cookies['.mewe.com']['/']['csrf-token'].value
 
     except KeyError:
+      self.refresh_lock.release()
       if self.session.headers.get('x-csrf-token') is None:
         raise EnvironmentError(
           'Failed to extract CSRF token from auth/identify operation and no usable '
           'token exists in current session.')
 
     self.session.cookies.save(ignore_discard=True, ignore_expires=True)
+    print("Session refreshed")
+    self.refresh_lock.release()
 
   def whoami(self):
     '''Invokes me/info method to update info on current user. Useful to check API usability.
