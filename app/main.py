@@ -134,6 +134,7 @@ def proxy_media():
   mime = request.args.get('mime', 'application/octet-stream')
   name = request.args.get('name')
 
+  c.refresh_session()
   res = c.session.get(f'https://mewe.com{url}', stream=True)
   if not res.ok:
     return res.iter_content(), 500

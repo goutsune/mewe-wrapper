@@ -66,6 +66,7 @@ class Mewe:
     return access_token and access_token.is_expired()
 
   def invoke_get(self, endpoint, payload=None):
+    self.refresh_session()
     r = self.session.get(endpoint, params=payload)
     if not r.ok:
       if r.json().get('message', '') == 'Forbidden':
@@ -169,7 +170,6 @@ class Mewe:
   def get_user_info(self, user_id):
     '''Invokes mycontacts/user/{user_id} method to fetch information about a user by their ID, contacts only.
     '''
-    self.refresh_session()
     r = self.invoke_get(f'{self.base}/v2/mycontacts/user/{user_id}')
     return r
 
@@ -178,7 +178,6 @@ class Mewe:
     For the time being at least 4 endpoints return that type:
       Main feed, Group feed, User feed, Post comments (lol)
     '''
-    self.refresh_session()
 
     feed = []
     users = {}  # We'll store users in a dictionary for convenience
@@ -232,7 +231,6 @@ class Mewe:
     '''
     endpoint = f'{self.base}/v2/home/post/{post_id}/comments'
     payload = {'maxResults': limit}
-    self.refresh_session()
 
     return self.invoke_get(endpoint, payload)
 
