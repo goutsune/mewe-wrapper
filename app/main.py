@@ -8,15 +8,13 @@ from mewe_api import Mewe
 
 # ###################### Init
 app = Flask(__name__)
-
+c = Mewe()
 
 # ###################### Quart setup
 def startup():
   '''Check user session via cookies here, perhaps fetch new token
   '''
   print("Connecting...")
-  global c
-  c = Mewe()
 
 
 def cleanup():
