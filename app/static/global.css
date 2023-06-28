@@ -173,6 +173,10 @@ position: relative;
     vertical-align: top;
 }
 
+.l2reply {
+	margin-left: 16px;
+}
+
 @media only screen and (max-width: 480px) {
 	html {
 		text-size-adjust:100%;

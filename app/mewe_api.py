@@ -226,10 +226,18 @@ class Mewe:
     endpoint = f'{self.base}/v2/home/post/{post_id}'
     return self.invoke_get(endpoint)
 
-  def get_post_comments(self, post_id, limit=100, pages=1):
+  def get_post_comments(self, post_id, limit=100):
     '''Invokes home/post/{post_id}/comments method to fetch single user posts
     '''
     endpoint = f'{self.base}/v2/home/post/{post_id}/comments'
+    payload = {'maxResults': limit}
+
+    return self.invoke_get(endpoint, payload)
+
+  def get_comment_replies(self, comment_id, limit=100):
+    '''Invokes comments/{comment_id}/replies method to fetch single comment replies
+    '''
+    endpoint = f'{self.base}/v2/comments/{comment_id}/replies'
     payload = {'maxResults': limit}
 
     return self.invoke_get(endpoint, payload)
@@ -428,12 +436,11 @@ class Mewe:
     return prepared
 
 
-  def prepare_post_comments(self, post, users):
+  def prepare_post_comments(self, comments_feed, users):
     '''Prepares nested list of comment message objects in a manner similar to prepare_post_message
     '''
     comments = []
-    # Comments seem to arrive in date-descending order
-    for raw_comment in reversed(post['comments']['feed']):
+    for raw_comment in comments_feed:
       comment = {}
       comment['text'] = self.markdown(raw_comment.get('text', ''))
       if owner := raw_comment.get('owner'):
@@ -447,9 +454,14 @@ class Mewe:
       if photo_obj := raw_comment.get('photo'):
         comment['photo'] = self._prepare_comment_photo(photo_obj)
 
+      if raw_comment.get('repliesCount'):
+        comment['replies'] = self.prepare_post_comments(raw_comment['replies'], users)
+
       comments.append(comment)
 
-    return comments
+    # Comments seem to arrive in date-descending order, however sometimes that rule is broken, so
+    # we can't just reverse the list. Let's sort them once again by timestamp field
+    return sorted(comments, key=lambda k: k['timestamp'])
 
 
   def prepare_single_post(self, post_id, load_all_comments=False):
@@ -461,17 +473,22 @@ class Mewe:
     users = {user['id']: user for user in response['users']}
 
     # Load up to 500 comments from the post
-    # TODO: Also load comment replies
-    if post.get('comments') \
-     and load_all_comments \
+    if post.get('comments') and load_all_comments \
      and len(post['comments']['feed']) < post['comments']['total']:
       response = self.get_post_comments(post_id, limit=500)
+
+      # Let's iterate over that response body some more and fill in comment replies if there are any
+      for comment in response['feed']:
+        if comment.get('repliesCount'):
+          comment_response = self.get_comment_replies(comment['id'], limit=500)
+          comment['replies'] = comment_response['comments']
+
       post['comments']['feed'] = response['feed']
 
     prepared_post = self.prepare_post_message(post, users)
     # Message schema is a bit different for comments, so we can't just reuse prepare_post_message
     if post.get('comments'):
-      prepared_post['comments'] = self.prepare_post_comments(post, users)
+      prepared_post['comments'] = self.prepare_post_comments(post['comments']['feed'], users)
     prepared_post['author'] = users[post['userId']]['name']
     prepared_post['id'] = post_id
     post_date = datetime.fromtimestamp(post['createdAt'])

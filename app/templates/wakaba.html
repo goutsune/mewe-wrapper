@@ -98,6 +98,40 @@
         </td>
       </tr>
     </tbody></table>
+      {% for reply in comment.replies %}
+      <table class="l2reply"><tbody>
+        <tr>
+          <td class="doubledash">&gt;&gt;</td>
+          <td class="reply" id="reply{{reply.id}}">
+           <a name="{{reply.id}}"></a>
+           <label>
+            <input type="checkbox" name="delete" value="{{reply.id}}">
+            <span class="replytitle"></span>
+            <span class="commentpostername">{{reply.user}}</span>
+            {{comment.date}}
+           </label>
+           <span class="reflink"><a href="javascript:insert(&#39;&gt;&gt;{{reply.id}}&#39;)">№{{reply.id}}</a></span>
+           <span class="postnum">#R</span>
+           <br>
+           {% if reply.photo %}
+           <span class="filesize">
+             <a target="_blank" href="{{reply.photo.url}}">{{reply.photo.name}}</a> -
+             (<em>Image size</em>)
+           </span>
+           <br>
+           <a target="_blank" href="{{reply.photo.url}}" class="imglink">
+            {% if reply.photo.thumb_vertical %}
+            <img src="{{reply.photo.thumb}}" width="auto" height="200" alt="{{reply.photo.name}}" class="thumb">
+            {% else %}
+            <img src="{{reply.photo.thumb}}" width="200" height="auto" alt="{{reply.photo.name}}" class="thumb">
+            {% endif %}
+           </a>
+           {% endif %}
+           <div class="post">{{reply.text|safe}}</div>
+          </td>
+        </tr>
+      </tbody></table>
+      {% endfor %}
     {% endfor %}
    </div>
    <!--thread-->
