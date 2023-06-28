@@ -40,6 +40,6 @@
 {% endif %}
 
 {% if content.repost %}
-<i>{{content.repost.author}} posted at {{content.repost.date}}</i>:
+<i>{{content.repost.author}} posted on {{content.repost.date}}</i>:
 <blockquote>{% with content=content.repost %}{% include "content.html" %}{% endwith %}</blockquote>
 {% endif %}

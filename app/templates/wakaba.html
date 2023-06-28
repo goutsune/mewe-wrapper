@@ -87,7 +87,11 @@
          </span>
          <br>
          <a target="_blank" href="{{comment.photo.url}}" class="imglink">
+          {% if comment.photo.thumb_vertical %}
           <img src="{{comment.photo.thumb}}" width="auto" height="200" alt="{{comment.photo.name}}" class="thumb">
+          {% else %}
+          <img src="{{comment.photo.thumb}}" width="200" height="auto" alt="{{comment.photo.name}}" class="thumb">
+          {% endif %}
          </a>
          {% endif %}
          <div class="post">{{comment.text|safe}}</div>
