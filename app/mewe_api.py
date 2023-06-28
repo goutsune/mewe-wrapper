@@ -3,6 +3,7 @@ from datetime import datetime
 from http import cookiejar
 from requests import Session, get, post
 from requests.utils import quote
+from urllib import parse as p
 
 from config import cookie_storage, user_agent, hostname
 
