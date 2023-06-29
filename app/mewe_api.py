@@ -22,6 +22,12 @@ class Mewe:
   markdown = None
   last_streamed_response = None
   refresh_lock = None
+  mime_mapping = {
+    'image/jpeg': 'jpg',
+    'image/png': 'png',
+    'image/gif': 'gif',
+    'image/webp': 'webp',
+  }
 
   def __init__(self):
     '''Things to do:
@@ -53,7 +59,7 @@ class Mewe:
 
     # We need custom markdown parser with HeaderProcessor unregistered, so let's store it here.
     # Lets also add hard line breaks while we're at it.
-    markdown_instance = markdown.Markdown(extensions=['nl2br'])
+    markdown_instance = markdown.Markdown(extensions=['nl2br', 'sane_lists', 'mdx_linkify'])
     markdown_instance.parser.blockprocessors.deregister('hashheader')  # breaks hashtags
     self.markdown = markdown_instance.convert
     # TODO: Needs block processor for user links.
@@ -351,8 +357,18 @@ class Mewe:
           image_dict = {}
           image_dict['url'] = self._prepare_photo_media(photo)
           image_dict['thumb'] = self._prepare_photo_media(photo, thumb=True)
+          image_dict['id'] = photo['id']
+          image_dict['mime'] = photo['mime']
+          image_dict['size'] = f'{photo["size"]["width"]}x{photo["size"]["height"]}'
+
+          if ext := self.mime_mapping.get(photo['mime']):
+            image_dict['name'] = f'{photo["id"]}.{ext}'
+          else:
+            image_dict['name'] = photo['id']
+
           # TODO: Add image captions, need more data
           image_dict['text'] = ''
+
 
           message['images'].append(image_dict)
 
@@ -414,24 +430,18 @@ class Mewe:
 
     url_template = photo['_links']['img']['href']
     mime = photo['mime']
-    if mime == 'image/jpeg':
-      name = f'{photo["id"]}.jpg'
-    elif mime == 'image/png':
-      name = f'{photo["id"]}.png'
-    elif mime == 'image/gif':
-      name = f'{photo["id"]}.gif'
-    elif mime == 'image/webp':
-      name = f'{photo["id"]}.webp'
-    else:
-      name = photo['id']
+    name = photo['name']
 
-    prepared_url = url_template.format(imageSize=f'{photo["size"]["width"]}x{photo["size"]["height"]}')
+    size = f'{photo["size"]["width"]}x{photo["size"]["height"]}'
+    prepared_url = url_template.format(imageSize=size)
     prepared_thumb = url_template.format(imageSize='400x400')
 
     prepared['url'] = f'{hostname}/proxy?url={prepared_url}&mime={mime}&name={name}'
     prepared['thumb'] = f'{hostname}/proxy?url={prepared_thumb}&mime={mime}&name={name}'
     prepared['thumb_vertical'] = True if photo['size']['width'] < photo['size']['height'] else False
     prepared['name'] = name
+    prepared['size'] = size
+    prepared['mime'] = mime
 
     return prepared
 

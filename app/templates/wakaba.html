@@ -21,7 +21,7 @@
     <table width="1%">
      <tbody>
       <tr>
-        <td class="postblock">Тема</td>
+        <td class="postblock">Получатель</td>
         <td>
           <input type="text" name="nya3" size="35">
           <input type="submit" value="Отправить">
@@ -45,15 +45,24 @@
   <form id="delform" action="/post" method="post">
    <div id="thread-{{post.id}}">
     <span class="filesize">
-    {% if post.images %}
-      <a target="_blank" href="{{post.images[0].url}}">Image name</a> - (<em>Image size</em>)
-    {% endif %}
+    {%- if post.images %}
+      <a target="_blank" href="{{post.images[0].url}}">{{post.images[0].name}}</a> -
+      (<em>{{post.images[0].mime}}, {{post.images[0].size}}</em>)
+    {%- endif %}
     </span>
     <br>
     {% if post.images %}
-    <a target="_blank" href="{{post.images[0].url}}" class="imglink">
-     <img src="{{post.images[0].thumb}}" width="200" height="auto" class="thumb">
-    </a>
+      {% for image in post.images %}
+      <a target="_blank" href="{{image.url}}" class="imglink" title="{{image.name}} - ({{image.mime}}, {{image.size}})">
+        {% if image.thumb_vertical %}
+        <img src="{{image.thumb}}" width="auto" height="200" alt="{{image.name}}" class="thumb">
+        {% else %}
+        <img src="{{image.thumb}}" width="200" height="auto" alt="{{image.name}}" class="thumb">
+        {% endif %}
+      </a>
+      {% endfor %}
+    {% else %}
+    <div class="nothumb">No<br>image</div>
     {% endif %}
     <a name="{{post.id}}">
     </a>
@@ -62,7 +71,7 @@
      <span class="postername">{{post.author}}</span>
      {{post.date}}
     </label>
-    <span class="reflink"><a href="javascript:insert(&#39;&gt;&gt;{{id}}&#39;)">№{{id}}</a></span>
+    <span class="reflink"><a href="javascript:insert(&#39;&gt;&gt;{{id}}&#39;)">№{{post.id}}</a></span>
     <span class="postnum">#OP</span>
     <div class="post">{{post.text|safe}}</div>
     {% for comment in post.comments %}
@@ -83,7 +92,7 @@
          {% if comment.photo %}
          <span class="filesize">
            <a target="_blank" href="{{comment.photo.url}}">{{comment.photo.name}}</a> -
-           (<em>Image size</em>)
+           (<em>{{comment.photo.mime}}, {{comment.photo.size}}</em>)
          </span>
          <br>
          <a target="_blank" href="{{comment.photo.url}}" class="imglink">
@@ -108,7 +117,7 @@
             <input type="checkbox" name="delete" value="{{reply.id}}">
             <span class="replytitle"></span>
             <span class="commentpostername">{{reply.user}}</span>
-            {{comment.date}}
+            {{reply.date}}
            </label>
            <span class="reflink"><a href="javascript:insert(&#39;&gt;&gt;{{reply.id}}&#39;)">№{{reply.id}}</a></span>
            <span class="postnum">#R</span>
@@ -144,7 +153,7 @@
    -
    <a href="#">Flask</a>
    +
-   <a href="#">Ass-hands</a>
+   <a href="#">不器用</a>
    +
    <a target="_blank" href="https://e-hentai.org/?f_cats=1017&f_search=futanari">Futanari doujins</a>
    -
