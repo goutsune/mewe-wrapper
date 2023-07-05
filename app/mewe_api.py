@@ -125,9 +125,6 @@ class Mewe:
     '''Checks current access token and receive new one accordingly faster than reloading session alltogether
     '''
 
-    if self.refresh_lock.locked():
-      print("Waiting for session refresh to finish")
-
     self.refresh_lock.acquire()
     if not self.is_token_expired():
       self.session.cookies.save(ignore_discard=True, ignore_expires=True)
@@ -157,7 +154,6 @@ class Mewe:
           'token exists in current session.')
 
     self.session.cookies.save(ignore_discard=True, ignore_expires=True)
-    print("Session refreshed")
     self.refresh_lock.release()
 
   def whoami(self):
