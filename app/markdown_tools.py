@@ -11,8 +11,13 @@ class EmojiInlineProcessor(InlineProcessor):
 
   def handleMatch(self, m, data):
     emojis = self.config['emoji_dict']
-    el = etree.Element('img')
     shortcode = m.group(1)
+
+    # Fail shortly on unknown shortcode, this is done by passing None as match start/end parameter
+    if shortcode not in emojis:
+      return None, None, None
+
+    el = etree.Element('img')
     el.set('alt', shortcode)
     el.set('class', 'mewe-emoji')
     el.set('src', emojis[shortcode])
