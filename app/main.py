@@ -144,7 +144,7 @@ def proxy_media():
   return res.iter_content(chunk_size=1024), {
      'Content-Type': mime,
      'Content-Length': content_length,
-     'Content-Disposition': f'inline; filename={name}'}
+     'Content-Disposition': f'inline; filename={quote(name)}'}
 
 # ###################### Webserver init
 if __name__ == "__main__":
