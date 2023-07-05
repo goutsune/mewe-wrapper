@@ -75,10 +75,14 @@
     </div>
     <div class="post">{{post.text|safe}}</div>
     {% for comment in post.comments %}
-      {% with comment=comment, reply_type='C' %}{% include 'wakaba_post.html' %}{% endwith %}
+      {% with comment=comment, reply_type='C', table_class='l1reply' %}
+        {% include 'wakaba_post.html' %}
+      {% endwith %}
 
       {% for reply in comment.replies %}
-        {% with comment=reply, reply_type='R' %}{% include 'wakaba_post.html' %}{% endwith %}
+        {% with comment=reply, reply_type='R', table_class='l2reply' %}
+          {% include 'wakaba_post.html' %}
+        {% endwith %}
       {% endfor %}
     {% endfor %}
    </div>
