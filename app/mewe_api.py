@@ -268,7 +268,7 @@ class Mewe:
       'before': 0,
       'multiPostId': post_id,
       'after': limit,
-      'order': 1,}
+      'order': 1}
 
     response = self.invoke_get(endpoint, payload)
 
@@ -374,7 +374,6 @@ class Mewe:
           # TODO: Add image captions, need more data
           image_dict['text'] = ''
 
-
           message['images'].append(image_dict)
 
     # Attachments
@@ -477,7 +476,6 @@ class Mewe:
     # Comments seem to arrive in date-descending order, however sometimes that rule is broken, so
     # we can't just reverse the list. Let's sort them once again by timestamp field
     return sorted(comments, key=lambda k: k['timestamp'])
-
 
   def prepare_single_post(self, post_id, load_all_comments=False):
     '''Prepares post and it's comments into simple dictionary following
