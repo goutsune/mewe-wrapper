@@ -1,6 +1,6 @@
 <html>
  <head>
-  <title>MeWeちゃん — {{post.author}}</title>
+  <title>MeWeちゃん — {{post.author}}@{{post.date}}</title>
   <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <link rel="stylesheet" type="text/css" href="/static/global.css">
@@ -64,82 +64,21 @@
     {% else %}
     <div class="nothumb">No<br>image</div>
     {% endif %}
-    <a name="{{post.id}}">
-    </a>
-    <label>
-     <span class="filetitle"></span>
-     <span class="postername">{{post.author}}</span>
-     {{post.date}}
-    </label>
-    <span class="reflink"><a href="javascript:insert(&#39;&gt;&gt;{{id}}&#39;)">№{{post.id}}</a></span>
-    <span class="postnum">#OP</span>
+    <div style="display: inline-block;">
+      <label>
+       <span class="filetitle"></span>
+       <span class="postername">{{post.author}}</span>
+       {{post.date}}
+      </label>
+      <span class="reflink"><a href="javascript:insert({{post.id}})">№{{post.id}}</a></span>
+      <span class="postnum">#OP</span>
+    </div>
     <div class="post">{{post.text|safe}}</div>
     {% for comment in post.comments %}
-    <table><tbody>
-      <tr>
-        <td class="doubledash">&gt;&gt;</td>
-        <td class="reply" id="reply{{comment.id}}">
-         <a name="{{comment.id}}"></a>
-         <label>
-          <input type="checkbox" name="delete" value="{{comment.id}}">
-          <span class="replytitle"></span>
-          <span class="commentpostername">{{comment.user}}</span>
-          {{comment.date}}
-         </label>
-         <span class="reflink"><a href="javascript:insert(&#39;&gt;&gt;{{comment.id}}&#39;)">№{{comment.id}}</a></span>
-         <span class="postnum">#C</span>
-         <br>
-         {% if comment.photo %}
-         <span class="filesize">
-           <a target="_blank" href="{{comment.photo.url}}">{{comment.photo.name}}</a> -
-           (<em>{{comment.photo.mime}}, {{comment.photo.size}}</em>)
-         </span>
-         <br>
-         <a target="_blank" href="{{comment.photo.url}}" class="imglink">
-          {% if comment.photo.thumb_vertical %}
-          <img src="{{comment.photo.thumb}}" width="auto" height="200" alt="{{comment.photo.name}}" class="thumb">
-          {% else %}
-          <img src="{{comment.photo.thumb}}" width="200" height="auto" alt="{{comment.photo.name}}" class="thumb">
-          {% endif %}
-         </a>
-         {% endif %}
-         <div class="post">{{comment.text|safe}}</div>
-        </td>
-      </tr>
-    </tbody></table>
+      {% with comment=comment, reply_type='C' %}{% include 'wakaba_post.html' %}{% endwith %}
+
       {% for reply in comment.replies %}
-      <table class="l2reply"><tbody>
-        <tr>
-          <td class="doubledash">&gt;&gt;</td>
-          <td class="reply" id="reply{{reply.id}}">
-           <a name="{{reply.id}}"></a>
-           <label>
-            <input type="checkbox" name="delete" value="{{reply.id}}">
-            <span class="replytitle"></span>
-            <span class="commentpostername">{{reply.user}}</span>
-            {{reply.date}}
-           </label>
-           <span class="reflink"><a href="javascript:insert(&#39;&gt;&gt;{{reply.id}}&#39;)">№{{reply.id}}</a></span>
-           <span class="postnum">#R</span>
-           <br>
-           {% if reply.photo %}
-           <span class="filesize">
-             <a target="_blank" href="{{reply.photo.url}}">{{reply.photo.name}}</a> -
-             (<em>Image size</em>)
-           </span>
-           <br>
-           <a target="_blank" href="{{reply.photo.url}}" class="imglink">
-            {% if reply.photo.thumb_vertical %}
-            <img src="{{reply.photo.thumb}}" width="auto" height="200" alt="{{reply.photo.name}}" class="thumb">
-            {% else %}
-            <img src="{{reply.photo.thumb}}" width="200" height="auto" alt="{{reply.photo.name}}" class="thumb">
-            {% endif %}
-           </a>
-           {% endif %}
-           <div class="post">{{reply.text|safe}}</div>
-          </td>
-        </tr>
-      </tbody></table>
+        {% with comment=reply, reply_type='R' %}{% include 'wakaba_post.html' %}{% endwith %}
       {% endfor %}
     {% endfor %}
    </div>
