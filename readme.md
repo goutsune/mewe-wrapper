@@ -1,16 +1,21 @@
 MeWe alternative frontend project
 ============================
 
-Goals:
+An attempt to recreate more classic experience on top of a modern social network as backend.
 
-1. Be able to browse user's feeds as individual RSS feeds
-2. Proxy media through the application to provide better filenames and
-   public links for RSS readers
-3. Simple page to view comment threads
+What is done:
+* Per-user RSS feeds with pretty complete post content parsing
+* Viewing posts with comments in old-school imageboard style
 
-Stretch goals:
+Under the hood:
+* Wrapper for working with MeWe auth and API based on observations from network usage
+* Parser for mewe-style emojis
+* File proxy to bypass internal auth mechanisms and simply serve media to the browser/feed viewer
 
-* Simple feed viewer for old'ish browsers
-* Wakaba-like imageboard experience with global feed seen as a board and
-posts with comments seen as a single thread
-* Ability to post in above threads as well as create new threads
+Goals in no particular order:
+* User feeds as boards
+* Groups as boards
+* Complete post schema conversion for use in thread viewer
+* Ability to browse above directly from the UI
+* Rudimentary posting functionality
+* Emoji reaction display support
