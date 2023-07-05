@@ -20,6 +20,11 @@ form .trap { display:none }
 	/* margin:2px 20px; */
 }
 
+.mewe-emoji {
+	display: inline;
+	max-height: 1em;
+}
+
 .catthread {
 	vertical-align: top;
 	word-wrap: break-word;

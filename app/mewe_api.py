@@ -7,6 +7,7 @@ from threading import Lock
 from urllib import parse as p
 
 from config import cookie_storage, user_agent, hostname
+from markdown_tools import MeweEmojiExtension
 
 
 class Mewe:
@@ -22,6 +23,7 @@ class Mewe:
   markdown = None
   last_streamed_response = None
   refresh_lock = None
+  emojis = None
   mime_mapping = {
     'image/jpeg': 'jpg',
     'image/png': 'png',
@@ -56,10 +58,17 @@ class Mewe:
 
     self.identity = session.get(f'{self.base}/v2/me/info').json()
     self.session = session
+    self.emojis = generate_emoji_dict()
 
     # We need custom markdown parser with HeaderProcessor unregistered, so let's store it here.
     # Lets also add hard line breaks while we're at it.
-    markdown_instance = markdown.Markdown(extensions=['nl2br', 'sane_lists', 'mdx_linkify'])
+    markdown_instance = markdown.Markdown(
+      extensions=[
+        'nl2br',
+        'sane_lists',
+        'mdx_linkify',
+        MeweEmojiExtension(emoji_dict=self.emojis)])
+
     markdown_instance.parser.blockprocessors.deregister('hashheader')  # breaks hashtags
     self.markdown = markdown_instance.convert
     # TODO: Needs block processor for user links.
@@ -499,3 +508,49 @@ class Mewe:
     post_date = datetime.fromtimestamp(post['createdAt'])
     prepared_post['date'] = post_date.strftime(r'%d %b %Y %H:%M:%S')
     return prepared_post
+
+
+def generate_emoji_dict():
+  '''Helper function to convert mewe-specific emoji codes into links
+
+  Roadmap:
+    * Load all JSONs from CDN and compile that information into 'code': 'URL' substitution dict
+    * Convert to class and provide dict-like object that dynamically handles emoji pack updates
+    * Set up rudimentary caching in form of JSON dump with timestamp with periodical checks
+  '''
+  _base = 'https://cdn.mewe.com'
+  r = get(f'{_base}/emoji/build-info.json')
+  r.raise_for_status()
+
+  # Build info contains information on used emoji packs and their locations
+  print(f'Fetching build info')
+  build_info = r.json()
+
+  # TODO: Use this to periodically check and rebuild emoji database
+  mewe_version = build_info['version']
+
+  packs = build_info['packs']
+
+  # Now let's load content of each emoji pack
+  pack_dict = {}
+  for pack_name, url in packs.items():
+    print(f'Fetching {pack_name}')
+    r = get(f'{_base}{url}')
+    r.raise_for_status()
+
+    pack_dict[pack_name] = r.json()
+
+  # Finally let's pack all that into simple flat dictionary for lookup table
+  emoji_dict = {}
+
+  for pack in pack_dict.values():
+    emoji_list = pack['emoji']
+
+    for emoji in emoji_list:
+      # Mewe uses both unicode and shortcodes for message formatting
+      if 'unicode' in emoji:
+        emoji_dict[emoji['unicode']] = f'{_base}{emoji["png"]["default"]}'
+
+      emoji_dict[emoji['shortname']] = f'{_base}{emoji["png"]["default"]}'
+
+  return emoji_dict
