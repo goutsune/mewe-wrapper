@@ -235,7 +235,10 @@ class Mewe:
     '''Invokes home/post/{post_id} method to fetch single post.
     '''
     endpoint = f'{self.base}/v2/home/post/{post_id}'
-    return self.invoke_get(endpoint)
+
+    # We want structure simmilar to feed retrival code, so let's output tuple
+    return_dict = self.invoke_get(endpoint)
+    return return_dict['post'], return_dict['users']
 
   def get_post_comments(self, post_id, limit=100):
     '''Invokes home/post/{post_id}/comments method to fetch single user posts
@@ -476,17 +479,15 @@ class Mewe:
     # we can't just reverse the list. Let's sort them once again by timestamp field
     return sorted(comments, key=lambda k: k['timestamp'])
 
-  def prepare_single_post(self, post_id, load_all_comments=False):
+  def prepare_single_post(self, post, users, load_all_comments=False):
     '''Prepares post and it's comments into simple dictionary following
     the same rules as used for feed preparation.
     '''
-    response = self.get_post(post_id)
-    post = response['post']
-    users = {user['id']: user for user in response['users']}
+    users = {user['id']: user for user in users}
 
     # Load up to 500 comments from the post
     if post.get('comments') and load_all_comments:
-      response = self.get_post_comments(post_id, limit=500)
+      response = self.get_post_comments(post['postItemId'], limit=500)
 
       # Let's iterate over that response body some more and fill in comment replies if there are any
       for comment in response['feed']:
@@ -501,7 +502,7 @@ class Mewe:
     if post.get('comments'):
       prepared_post['comments'] = self.prepare_post_comments(post['comments']['feed'], users)
     prepared_post['author'] = users[post['userId']]['name']
-    prepared_post['id'] = post_id
+    prepared_post['id'] = post['postItemId']
     post_date = datetime.fromtimestamp(post['createdAt'])
     prepared_post['date'] = post_date.strftime(r'%d %b %Y %H:%M:%S')
     return prepared_post
