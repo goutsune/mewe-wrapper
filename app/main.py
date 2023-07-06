@@ -34,65 +34,17 @@ def cleanup():
 
 
 # ###################### App routes
-@app.route('/myworld')
+@app.route('/')
 def retr_history():
-  # Abort shortly on HEAD request to save time
-  if request.method == 'HEAD':
-    return "OK"
+  '''Generates index page with latest medias and posts.
+  Also shows user list and group list'''
 
-  limit = request.args.get('limit', '50')
-  pages = int(request.args.get('pages', '1'))
-
-  feed, users = c.get_feed(limit=limit, pages=pages)
-  if feed[0].get('error', False):
-    return users['error'], 500
-
-  posts = process_feed(feed, users)
-
-  title = f'{c.identity["firstName"]} {c.identity["lastName"]}\'s world feed'
-  info = title
-  link = 'https://mewe.com/myworld'
-  profile_pic = c.identity['_links']['avatar']['href'].format(imageSize='1280x1280')
-  pp_quoted = quote(profile_pic, safe='')
-  avatar = f'{hostname}/proxy?url={pp_quoted}&mime=image/jpeg&name={c.identity["id"]}'
-  build = datetime.now().strftime(r'%Y-%m-%dT%H:%M:%S%z')
-
-  return render_template(
-    'history.html', contents=posts, info=info, title=title, link=link, avatar=avatar, build=build)
-
-
-@app.route('/userfeed/<string:user_id>')
-def retr_userfeed(user_id):
-  # Abort shortly on HEAD request to save time
-  if request.method == 'HEAD':
-    return "OK"
-
-  limit = request.args.get('limit', '50')
-  pages = int(request.args.get('pages', '1'))
-
-  posts, users = c.prepare_feed(user_id, limit=limit, pages=pages, retrieve_medias=True)
-  user = users[user_id]
-
-  # TODO: Fetch user info here to prepare some nice channel description
-  info = ''
-
-  title = f'{user["name"]}'
-
-  link = f'https://mewe.com/i/{user["contactInviteId"]}'
-  profile_pic = user['_links']['avatar']['href'].format(imageSize='1280x1280')
-  pp_quoted = quote(profile_pic, safe='')
-  avatar = f'{hostname}/proxy?url={pp_quoted}&mime=image/jpeg&name={user["id"]}'
-  build = datetime.now().strftime(r'%Y-%m-%dT%H:%M:%S%z')
-
-  return render_template(
-    'history.html', contents=posts, info=info, title=title, link=link, avatar=avatar, build=build)
+  return render_template('wakaba_index.html', )
 
 
 @app.route('/viewpost/<string:post_id>')
 def show_post(post_id):
-  # Abort shortly on HEAD request to save time
-  if request.method == 'HEAD':
-    return "OK"
+  '''Processes post data and displays it as single imageboard thread'''
 
   post = c.prepare_single_post(post_id, load_all_comments=True)
   return render_template('wakaba.html', post=post)
