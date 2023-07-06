@@ -447,6 +447,7 @@ class Mewe:
         comment['user'] = owner['name']
       else:
         comment['user'] = users[raw_comment['userId']]['name']
+      comment['user_id'] = raw_comment['userId']
       comment['id'] = raw_comment['id']
       comment_date = datetime.fromtimestamp(raw_comment['createdAt'])
       comment['date'] = comment_date.strftime(r'%d %b %Y %H:%M:%S')
@@ -486,6 +487,7 @@ class Mewe:
     if post.get('comments'):
       prepared_post['comments'] = self.prepare_post_comments(post['comments']['feed'], users)
     prepared_post['author'] = users[post['userId']]['name']
+    prepared_post['author_id'] = post['userId']
     prepared_post['id'] = post['postItemId']
     post_date = datetime.fromtimestamp(post['createdAt'])
     prepared_post['date'] = post_date.strftime(r'%d %b %Y %H:%M:%S')

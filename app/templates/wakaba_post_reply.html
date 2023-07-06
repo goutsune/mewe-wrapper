@@ -7,6 +7,7 @@
       <input type="checkbox" name="delete" value="{{comment.id}}">
       <span class="replytitle"></span>
       <span class="commentpostername">{{comment.user}}</span>
+      <a class="posterlink" href="/userfeed/{{comment.user_id}}" target="_blank">▶</a>
       {{comment.date}}
      </label>
      <span class="reflink"><a href="javascript:insert(&#39;&gt;&gt;{{comment.id}}&#39;)">№{{comment.id}}</a></span>
