@@ -7,19 +7,21 @@
   {%- endif %}
   </span>
   <br>
-  {% if post.content.images %}
-    {% for image in post.content.images %}
-    <a target="_blank" href="{{image.url}}" class="imglink" title="{{image.name}} - ({{image.mime}}, {{image.size}})">
-      {% if image.thumb_vertical %}
-      <img src="{{image.thumb}}" width="auto" height="200" alt="{{image.name}}" class="thumb">
-      {% else %}
-      <img src="{{image.thumb}}" width="200" height="auto" alt="{{image.name}}" class="thumb">
-      {% endif %}
-    </a>
-    {% endfor %}
-  {% else %}
-  <div class="nothumb">No<br>image</div>
-  {% endif %}
+  <div class="image-container">
+    {% if post.content.images %}
+      {% for image in post.content.images %}
+      <a target="_blank" href="{{image.url}}" class="imglink" title="{{image.name}} - ({{image.mime}}, {{image.size}})">
+        {% if image.thumb_vertical %}
+        <img src="{{image.thumb}}" width="auto" height="200" alt="{{image.name}}" class="thumb">
+        {% else %}
+        <img src="{{image.thumb}}" width="200" height="auto" alt="{{image.name}}" class="thumb">
+        {% endif %}
+      </a>
+      {% endfor %}
+    {% else %}
+    <div class="nothumb">Нет<br>уменьшенной<br>копии.</div>
+    {% endif %}
+  </div>
   <div style="display: inline-block;">
     <label>
      <span class="filetitle"></span>

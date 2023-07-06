@@ -363,6 +363,7 @@ class Mewe:
           image_dict = {}
           image_dict['url'] = self._prepare_photo_media(photo)
           image_dict['thumb'] = self._prepare_photo_media(photo, thumb=True)
+          image_dict['thumb_vertical'] = True if photo["size"]["width"] < photo["size"]["height"] else False
           image_dict['id'] = photo['id']
           image_dict['mime'] = photo['mime']
           image_dict['size'] = f'{photo["size"]["width"]}x{photo["size"]["height"]}'
@@ -419,8 +420,12 @@ class Mewe:
     name = photo['name']
 
     size = f'{photo["size"]["width"]}x{photo["size"]["height"]}'
-    prepared_url = url_template.format(imageSize=size)
-    prepared_thumb = url_template.format(imageSize='400x400')
+    if photo.get('animated'):
+      prepared_url = url_template.format(imageSize=size, static=0)
+      prepared_thumb = url_template.format(imageSize='400x400', static=1)
+    else:
+      prepared_url = url_template.format(imageSize=size)
+      prepared_thumb = url_template.format(imageSize='400x400')
 
     prepared['url'] = f'{hostname}/proxy?url={prepared_url}&mime={mime}&name={name}'
     prepared['thumb'] = f'{hostname}/proxy?url={prepared_thumb}&mime={mime}&name={name}'
