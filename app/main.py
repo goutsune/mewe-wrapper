@@ -57,7 +57,7 @@ def retr_userfeed(user_id):
   pages = int(request.args.get('pages', '1'))
 
   feed, users = c.get_user_feed(user_id, limit=limit, pages=pages)
-  posts, users = c.prepare_feed(feed, users, retrieve_medias=True)
+  posts, users = c.prepare_feed(feed, users)
 
   user = users[user_id]
   title = f'{user["name"]}'
