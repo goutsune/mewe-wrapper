@@ -47,7 +47,7 @@ def show_post(post_id):
   '''Processes post data and displays it as single imageboard thread'''
 
   post = c.prepare_single_post(post_id, load_all_comments=True)
-  return render_template('wakaba.html', post=post)
+  return render_template('wakaba_thread.html', post=post)
 
 
 @app.route('/userfeed_rss/<string:user_id>')
