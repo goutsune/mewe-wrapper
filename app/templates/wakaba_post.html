@@ -28,8 +28,12 @@
     </label>
     <span class="reflink"><a href="javascript:insert({{post.id}})">№{{post.id}}</a></span>
     <span class="postnum">#OP</span>
+    {% if board_view %}[<a href="/viewpost/{{post.id}}">Ответ</a>]{% endif %}
   </div>
-  <div class="post">{{post.text|safe}}</div>
+  <div class="post">{{post.content.text|safe}}</div>
+  {% if board_view and post.missing_count %}
+    <span class="omittedposts"> Пропущено {{post.missing_count}} сообщений. Для просмотра нажмите "Ответ".</span>
+  {% endif %}
   {% for comment in post.comments %}
     {% with comment=comment, reply_type='C', table_class='l1reply' %}
       {% include 'wakaba_post_reply.html' %}

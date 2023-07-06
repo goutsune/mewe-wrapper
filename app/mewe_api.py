@@ -484,6 +484,10 @@ class Mewe:
     prepared_post['id'] = post['postItemId']
     post_date = datetime.fromtimestamp(post['createdAt'])
     prepared_post['date'] = post_date.strftime(r'%d %b %Y %H:%M:%S')
+    if post.get('comments'):
+      prepared_post['missing_count'] = post['comments']['total'] - len(post['comments']['feed'])
+    else:
+      prepared_post['missing_count'] = 0
 
     # Extra meta for RSS
     prepared_post['categories'] = [x for x in post.get('hashTags', [])]

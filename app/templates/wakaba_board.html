@@ -33,54 +33,9 @@
    </form>
   </div>
   <hr>
-  {% for post in contents %}
-  <form id="delform" action="/post" method="post">
-   <div id="thread-{{post.id}}">
-    <span class="filesize">
-    {%- if post.content.images %}
-      <a target="_blank" href="{{post.content.images[0].url}}">{{post.content.images[0].name}}</a> -
-      (<em>{{post.content.images[0].mime}}, {{post.content.images[0].size}}</em>)
-    {%- endif %}
-    </span>
-    <br>
-    {% if post.content.images %}
-      {% for image in post.content.images %}
-      <a target="_blank" href="{{image.url}}" class="imglink" title="{{image.name}} - ({{image.mime}}, {{image.size}})">
-        {% if image.thumb_vertical %}
-        <img src="{{image.thumb}}" width="auto" height="200" alt="{{image.name}}" class="thumb">
-        {% else %}
-        <img src="{{image.thumb}}" width="200" height="auto" alt="{{image.name}}" class="thumb">
-        {% endif %}
-      </a>
-      {% endfor %}
-    {% else %}
-    <div class="nothumb">No<br>image</div>
-    {% endif %}
-    <div style="display: inline-block;">
-      <label>
-       <span class="filetitle"></span>
-       <span class="postername">{{post.author}}</span>
-       {{post.date}}
-      </label>
-      <span class="reflink"><a href="javascript:insert({{post.id}})">№{{post.id}}</a></span>
-      <span class="postnum">#OP</span>
-    </div>
-    <div class="post">{{post.content.text|safe}}</div>
-    {% for comment in post.comments %}
-      {% with comment=comment, reply_type='C', table_class='l1reply' %}
-        {% include 'wakaba_post_reply.html' %}
-      {% endwith %}
-
-      {% for reply in comment.replies %}
-        {% with comment=reply, reply_type='R', table_class='l2reply' %}
-          {% include 'wakaba_post_reply.html' %}
-        {% endwith %}
-      {% endfor %}
+  {% with board_view=True %}
+    {% for post in contents %}
+      {% include 'wakaba_post.html' %}
     {% endfor %}
-   </div>
-   <!--thread-->
-   <br clear="left">
-   <hr>
-  </form>
-  {% endfor %}
+  {% endwith %}
 {% endblock %}
