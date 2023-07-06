@@ -1,18 +1,10 @@
-<html>
- <head>
-  <title>MeWeちゃん — {{post.author}}@{{post.date}}</title>
-  <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <link rel="stylesheet" type="text/css" href="/static/global.css">
-  <link rel="stylesheet" type="text/css" href="/static/gurochan.css" title="Gurochan">
- </head>
- <body class="replypage">
-  <div class="logo">
-   <img class="banner" alt="" src="/static/logo.png" width="300" height="100"><br>
-   MeWeちゃん — {{post.author}}
-  </div>
-  <hr>
+{% extends 'wakaba_base.html' %}
 
+{% block title %}MeWeちゃん — {{post.author}}@{{post.date}}{% endblock %}
+{% block logo_title %}MeWeちゃん — {{post.author}}{% endblock %}
+{% block body_class %}class="replypage"{% endblock %}
+
+{% block content %}
   <div class="postarea">
    <form id="postform" action="/post/" method="post" enctype="multipart/form-data">
     <input type="hidden" name="task" value="post">
@@ -90,16 +82,4 @@
    <br clear="left">
    <hr>
   </form>
-
-  <div class="adminbar">[ This space was intentionally left empty ]</div>
-  <p class="footer">
-   -
-   <a href="#">Flask</a>
-   +
-   <a href="#">不器用</a>
-   +
-   <a target="_blank" href="https://e-hentai.org/?f_cats=1017&f_search=futanari">Futanari doujins</a>
-   -
-  </p>
- </body>
-</html>
+{% endblock %}

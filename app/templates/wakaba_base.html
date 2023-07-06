@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+ <head>
+  <title>{% block title %}MeWeちゃん — Бака-болванка{% endblock %}</title>
+  <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="stylesheet" type="text/css" href="/static/global.css">
+  <link rel="stylesheet"           type="text/css" href="/static/futaba.css" title="Futaba" />
+  <link rel="alternate stylesheet" type="text/css" href="/static/burichan.css" title="Burichan" />
+  <link rel="alternate stylesheet" type="text/css" href="/static/gurochan.css" title="Gurochan" />
+  <link rel="alternate stylesheet" type="text/css" href="/static/tomorrow.css" title="Tomorrow" />
+  <script type="text/javascript">var style_cookie="wakabastyle";</script>
+  <script type="text/javascript" src="/static/wakaba_mewe.js"></script>
+ </head>
+ <body {% block body_class %}{% endblock %}>
+  <div class="adminbar">
+    [ This space was intentionally left empty ]<br>
+    <select name="switcher" onchange="set_stylesheet_frame(this.value,'list')">
+      <option value="Burichan">Burichan</option>
+      <option value="Futaba">Futaba</option>
+      <option value="Gurochan">Gurochan</option>
+      <option value="Tomorrow">Tomorrow</option>
+    </select> -
+    [<a href="/groups/" title="группы | groups">Группы</a>]
+    [<a href="/feed/" title="подписки | feed">Подписки</a>]
+    [<a href="/albums/" title="альбомы | albums">Альбомы</a>]
+    </div>
+  <div class="logo">
+   <img class="banner" alt="" src="/static/logo.png" width="300" height="100"><br>
+   {% block logo_title %}MeWeちゃん — {{post.author}}{% endblock %}
+  </div>
+  <hr>
+  {% block content %}<div class="logo">Now, where were we?</div>{% endblock %}
+  <div class="adminbar">[ This space was intentionally left empty ]</div>
+  <p class="footer">
+   -
+   <a href="#">Flask</a>
+   +
+   <a href="#">不器用</a>
+   +
+   <a target="_blank" href="https://e-hentai.org/?f_cats=1017&f_search=futanari">Futanari doujins</a>
+   -
+  </p>
+ </body>
+</html>
