@@ -10,6 +10,7 @@ from mewe_api import Mewe
 app = Flask(__name__)
 c = Mewe()
 
+
 # ###################### Quart setup
 def startup():
   '''Check user session via cookies here, perhaps fetch new token
@@ -24,31 +25,45 @@ def cleanup():
   c.refresh_session()
 
 
-#@app.before_request
-#def conn_check():
-#  '''Fetch new token and perhaps update refresh token here
-#  '''
-#  if not c.session_ok():
-#    print("Not connected, reconnecting...")
-#    startup()
-
-
 # ###################### App routes
 @app.route('/')
-def retr_history():
+def make_index():
   '''Generates index page with latest medias and posts.
   Also shows user list and group list'''
+  medias = c.prepare_media_feed(limit=10)
+  posts = c.prepare_feed(limit=10, only_text=True)
+  groups = c.get_groups()
+  albums = c.get_albums()
 
-  return render_template('wakaba_index.html', )
+  return render_template('wakaba_index.html', medias=medias, posts=posts, groups=groups, albums=albums)
 
 
 @app.route('/viewpost/<string:post_id>')
 def show_post(post_id):
   '''Processes post data and displays it as single imageboard thread'''
 
-  post, users = c.get_post(post_id)
-  post_obj = c.prepare_single_post(post, users, load_all_comments=True)
+  result = c.get_post(post_id)
+  users = {user['id']: user for user in result['users']}
+  post_obj = c.prepare_single_post(result['post'], users, load_all_comments=True)
   return render_template('wakaba_thread.html', post=post_obj)
+
+
+@app.route('/userfeed/<string:user_id>')
+def retr_userfeed(user_id):
+  '''Displays user feed as a thread list
+  '''
+  # TODO: Implement pagination
+  limit = request.args.get('limit', '50')
+  pages = int(request.args.get('pages', '1'))
+
+  feed, users = c.get_user_feed(user_id, limit=limit, pages=pages)
+  posts, users = c.prepare_feed(feed, users, retrieve_medias=True)
+
+  user = users[user_id]
+  title = f'{user["name"]}'
+
+  return render_template(
+    'wakaba_board.html', contents=posts, title=title)
 
 
 @app.route('/userfeed_rss/<string:user_id>')
@@ -60,8 +75,8 @@ def retr_userfeed_rss(user_id):
   limit = request.args.get('limit', '50')
   pages = int(request.args.get('pages', '1'))
   feed, users = c.get_user_feed(user_id, limit=limit, pages=pages)
-
   posts, users = c.prepare_feed(feed, users, retrieve_medias=True)
+
   user = users[user_id]
 
   # TODO: Fetch user info here to prepare some nice channel description

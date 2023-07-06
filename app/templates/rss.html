@@ -21,11 +21,11 @@
     <category term="{{category}}" label="{{category}}"></category>
     {% endfor %}
     <title>{{ msg.title }}</title>
-    <updated>{{ msg.date }}</updated>
-    <author><name>{{ msg.author }}</name></author>
+    <updated>{{ msg.date_rss }}</updated>
+    <author><name>{{ msg.author_rss }}</name></author>
     <link href="{{ msg.link }}" />
-    <id>{{ msg.guid }}</id>
-    <guid>{{ msg.guid }}</guid>
+    <id>{{ msg.id }}</id>
+    <guid>{{ msg.id }}</guid>
   </entry>
   {% endfor %}
 </feed>

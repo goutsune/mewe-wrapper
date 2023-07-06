@@ -236,9 +236,7 @@ class Mewe:
     '''
     endpoint = f'{self.base}/v2/home/post/{post_id}'
 
-    # We want structure simmilar to feed retrival code, so let's output tuple
-    return_dict = self.invoke_get(endpoint)
-    return return_dict['post'], return_dict['users']
+    return self.invoke_get(endpoint)
 
   def get_post_comments(self, post_id, limit=100):
     '''Invokes home/post/{post_id}/comments method to fetch single user posts
@@ -311,8 +309,8 @@ class Mewe:
     url = f'{hostname}/proxy?url={quoted_url}&mime={mime}&name={name}'
     return url, name
 
-  def prepare_post_message(self, post, user_list):
-    '''Formats MeWe post object for use with template output.
+  def prepare_post_contents(self, post, user_list):
+    '''Reserializes MeWe post object for more convenient use with template output.
     '''
     message = {}
     message['text'] = self.markdown(post.get('text', ''))
@@ -389,7 +387,7 @@ class Mewe:
 
     # Referenced message
     if ref_post := post.get('refPost'):
-      message['repost'] = self.prepare_post_message(ref_post, user_list)
+      message['repost'] = self.prepare_post_contents(ref_post, user_list)
       message['repost']['author'] = self.resolve_user(ref_post['userId'], user_list)
       repost_date = datetime.fromtimestamp(ref_post['createdAt'])
       message['repost']['date'] = repost_date.strftime(r'%d %b %Y %H:%M:%S')
@@ -408,25 +406,7 @@ class Mewe:
         post['medias'] = extra_medias  # FIXME: Only fetch remaining objects to save data?
         users.update(extra_users)
 
-      msg = {}
-      msg['content'] = self.prepare_post_message(post, users)
-      msg['author'] = self.resolve_user(post['userId'], users)
-      msg['guid'] = f'{post["postItemId"]}'
-      msg['categories'] = [x for x in post.get('hashTags', [])]
-      if album := post.get('album'):
-        msg['categories'].insert(0, album)
-
-      post_date = datetime.fromtimestamp(post['createdAt'])
-      msg['date'] = post_date.strftime(r'%Y-%m-%dT%H:%M:%S%z')
-      if post['text'] and len(post['text']) > 60:
-        msg['title'] = post['text'][0:60] + '…'
-      else:
-        msg['title'] = post['text']
-      if not msg['title']:
-        msg['title'] = post_date.strftime(r'%d %b %Y %H:%M:%S')
-
-      msg['link'] = f'{hostname}/viewpost/{post["postItemId"]}'
-
+      msg = self.prepare_single_post(post, users)
       posts.append(msg)
 
     return posts, users
@@ -451,9 +431,8 @@ class Mewe:
 
     return prepared
 
-
   def prepare_post_comments(self, comments_feed, users):
-    '''Prepares nested list of comment message objects in a manner similar to prepare_post_message
+    '''Prepares nested list of comment message objects in a manner similar to prepare_post_contents
     '''
     comments = []
     for raw_comment in comments_feed:
@@ -470,7 +449,7 @@ class Mewe:
       if photo_obj := raw_comment.get('photo'):
         comment['photo'] = self._prepare_comment_photo(photo_obj)
 
-      if raw_comment.get('repliesCount'):
+      if raw_comment.get('repliesCount') and 'replies' in raw_comment:
         comment['replies'] = self.prepare_post_comments(raw_comment['replies'], users)
 
       comments.append(comment)
@@ -483,7 +462,6 @@ class Mewe:
     '''Prepares post and it's comments into simple dictionary following
     the same rules as used for feed preparation.
     '''
-    users = {user['id']: user for user in users}
 
     # Load up to 500 comments from the post
     if post.get('comments') and load_all_comments:
@@ -497,14 +475,31 @@ class Mewe:
 
       post['comments']['feed'] = response['feed']
 
-    prepared_post = self.prepare_post_message(post, users)
-    # Message schema is a bit different for comments, so we can't just reuse prepare_post_message
+    prepared_post = {}
+    prepared_post['content'] = self.prepare_post_contents(post, users)
+    # Message schema is a bit different for comments, so we can't just reuse prepare_post_contents
     if post.get('comments'):
       prepared_post['comments'] = self.prepare_post_comments(post['comments']['feed'], users)
     prepared_post['author'] = users[post['userId']]['name']
     prepared_post['id'] = post['postItemId']
     post_date = datetime.fromtimestamp(post['createdAt'])
     prepared_post['date'] = post_date.strftime(r'%d %b %Y %H:%M:%S')
+
+    # Extra meta for RSS
+    prepared_post['categories'] = [x for x in post.get('hashTags', [])]
+    if album := post.get('album'):
+      prepared_post['categories'].insert(0, album)
+    prepared_post['author_rss'] = self.resolve_user(post['userId'], users)
+    prepared_post['date_rss'] = post_date.strftime(r'%Y-%m-%dT%H:%M:%S%z')
+    if post['text'] and len(post['text']) > 60:
+      prepared_post['title'] = post['text'][0:60] + '…'
+    else:
+      prepared_post['title'] = post['text']
+    if not prepared_post['title']:
+      prepared_post['title'] = post_date.strftime(r'%d %b %Y %H:%M:%S')
+
+    prepared_post['link'] = f'{hostname}/viewpost/{post["postItemId"]}'
+
     return prepared_post
 
 

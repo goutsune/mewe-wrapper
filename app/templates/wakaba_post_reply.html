@@ -1,0 +1,32 @@
+<table class="{{ table_class }}"><tbody>
+  <tr>
+    <td class="doubledash">&gt;&gt;</td>
+    <td class="reply" id="reply{{comment.id}}">
+     <a name="{{comment.id}}"></a>
+     <label>
+      <input type="checkbox" name="delete" value="{{comment.id}}">
+      <span class="replytitle"></span>
+      <span class="commentpostername">{{comment.user}}</span>
+      {{comment.date}}
+     </label>
+     <span class="reflink"><a href="javascript:insert(&#39;&gt;&gt;{{comment.id}}&#39;)">№{{comment.id}}</a></span>
+     <span class="postnum">#{{ reply_type }}</span>
+     <br>
+     {% if comment.photo %}
+     <span class="filesize">
+       <a target="_blank" href="{{comment.photo.url}}">{{comment.photo.name}}</a> -
+       (<em>{{comment.photo.mime}}, {{comment.photo.size}}</em>)
+     </span>
+     <br>
+     <a target="_blank" href="{{comment.photo.url}}" class="imglink">
+      {% if comment.photo.thumb_vertical %}
+      <img src="{{comment.photo.thumb}}" width="auto" height="200" alt="{{comment.photo.name}}" class="thumb">
+      {% else %}
+      <img src="{{comment.photo.thumb}}" width="200" height="auto" alt="{{comment.photo.name}}" class="thumb">
+      {% endif %}
+     </a>
+     {% endif %}
+     <div class="post">{{comment.text|safe}}</div>
+    </td>
+  </tr>
+</tbody></table>

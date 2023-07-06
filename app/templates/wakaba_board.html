@@ -1,0 +1,86 @@
+{% extends 'wakaba_base.html' %}
+
+{% block title %}MeWeちゃん — {{title}}{% endblock %}
+{% block logo_title %}MeWeちゃん — {{title}}{% endblock %}
+
+{% block content %}
+  <div class="postarea">
+   <form id="postform" action="/post/" method="post" enctype="multipart/form-data">
+    <input type="hidden" name="task" value="post">
+    <input type="hidden" name="parent" value="{{user_id}}">
+    <input type="hidden" name="nya1">
+    <table width="1%">
+     <tbody>
+      <tr>
+        <td class="postblock">Получатель</td>
+        <td>
+          <input type="text" name="nya3" size="35">
+          <input type="submit" value="Отправить">
+        </td>
+      </tr>
+      <tr>
+        <td class="postblock">Сообщение</td>
+        <td>
+          <textarea name="nya4" cols="60" rows="6"></textarea>
+        </td>
+      </tr>
+      <tr>
+       <td class="postblock">Файл</td>
+       <td><input type="file" name="file" size="35"></td>
+      </tr>
+     </tbody>
+    </table>
+   </form>
+  </div>
+  <hr>
+  {% for post in contents %}
+  <form id="delform" action="/post" method="post">
+   <div id="thread-{{post.id}}">
+    <span class="filesize">
+    {%- if post.content.images %}
+      <a target="_blank" href="{{post.content.images[0].url}}">{{post.content.images[0].name}}</a> -
+      (<em>{{post.content.images[0].mime}}, {{post.content.images[0].size}}</em>)
+    {%- endif %}
+    </span>
+    <br>
+    {% if post.content.images %}
+      {% for image in post.content.images %}
+      <a target="_blank" href="{{image.url}}" class="imglink" title="{{image.name}} - ({{image.mime}}, {{image.size}})">
+        {% if image.thumb_vertical %}
+        <img src="{{image.thumb}}" width="auto" height="200" alt="{{image.name}}" class="thumb">
+        {% else %}
+        <img src="{{image.thumb}}" width="200" height="auto" alt="{{image.name}}" class="thumb">
+        {% endif %}
+      </a>
+      {% endfor %}
+    {% else %}
+    <div class="nothumb">No<br>image</div>
+    {% endif %}
+    <div style="display: inline-block;">
+      <label>
+       <span class="filetitle"></span>
+       <span class="postername">{{post.author}}</span>
+       {{post.date}}
+      </label>
+      <span class="reflink"><a href="javascript:insert({{post.id}})">№{{post.id}}</a></span>
+      <span class="postnum">#OP</span>
+    </div>
+    <div class="post">{{post.content.text|safe}}</div>
+    {% for comment in post.comments %}
+      {% with comment=comment, reply_type='C', table_class='l1reply' %}
+        {% include 'wakaba_post_reply.html' %}
+      {% endwith %}
+
+      {% for reply in comment.replies %}
+        {% with comment=reply, reply_type='R', table_class='l2reply' %}
+          {% include 'wakaba_post_reply.html' %}
+        {% endwith %}
+      {% endfor %}
+    {% endfor %}
+   </div>
+   <!--thread-->
+   <br clear="left">
+   <hr>
+  </form>
+  {% endfor %}
+{% endblock %}
