@@ -393,11 +393,10 @@ class Mewe:
 
     return message
 
-  def prepare_feed(self, user_id, limit=30, pages=1, retrieve_medias=False):
+  def prepare_feed(self, feed, users, retrieve_medias=False):
     '''Helper function to iterate over feed object and prepare rss-esque data set
     '''
     posts = []
-    feed, users = self.get_user_feed(user_id, limit=limit, pages=pages)
 
     for post in feed:
       # Retrieve extra media elements from post if there are more than 4

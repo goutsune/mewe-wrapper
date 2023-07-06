@@ -58,8 +58,9 @@ def retr_userfeed_rss(user_id):
 
   limit = request.args.get('limit', '50')
   pages = int(request.args.get('pages', '1'))
+  feed, users = c.get_user_feed(user_id, limit=limit, pages=pages)
 
-  posts, users = c.prepare_feed(user_id, limit=limit, pages=pages, retrieve_medias=True)
+  posts, users = c.prepare_feed(feed, users, retrieve_medias=True)
   user = users[user_id]
 
   # TODO: Fetch user info here to prepare some nice channel description
