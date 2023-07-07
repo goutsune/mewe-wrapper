@@ -463,10 +463,15 @@ class Mewe:
     # we can't just reverse the list. Let's sort them once again by timestamp field
     return sorted(comments, key=lambda k: k['timestamp'])
 
-  def prepare_single_post(self, post, users, load_all_comments=False):
+  def prepare_single_post(self, post, users, load_all_comments=False, retrieve_medias=False):
     '''Prepares post and it's comments into simple dictionary following
     the same rules as used for feed preparation.
     '''
+    # Retrieve extra media elements from post if there are more than 4
+    if post.get('mediasCount', 0) > 4 and retrieve_medias:
+      extra_medias, extra_users = self.get_post_medias(post)
+      post['medias'] = extra_medias  # FIXME: Only fetch remaining objects to save data?
+      users.update(extra_users)
 
     # Load up to 500 comments from the post
     if post.get('comments') and load_all_comments:
