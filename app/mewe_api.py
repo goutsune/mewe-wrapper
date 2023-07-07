@@ -383,7 +383,7 @@ class Mewe:
       for document in files:
         doc_dict = {}
         doc_dict['url'], doc_dict['name'] = self._prepare_document(document)
-
+        doc_dict['mime'] = document['mime']
         message['files'].append(doc_dict)
 
     # Referenced message

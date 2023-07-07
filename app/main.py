@@ -100,6 +100,7 @@ def proxy_media():
     return "OK"
 
   url = request.args.get('url')
+  # MeWe reports some of types as octet-stream, hence this passing back and forth
   mime = request.args.get('mime', 'application/octet-stream')
   name = request.args.get('name')
 
