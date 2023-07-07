@@ -1,0 +1,45 @@
+{%- if content.images %}
+<span class="filesize">
+  <a target="_blank" href="{{content.images[0].url}}">{{content.images[0].name}}</a> -
+  (<em>{{content.images[0].mime}}, {{content.images[0].size}}</em>)
+</span>
+<br>
+<div class="image-container">
+ {% for image in content.images %}
+ <a target="_blank" href="{{image.url}}" class="imglink" title="{{image.name}} - ({{image.mime}}, {{image.size}})">
+   {% if image.thumb_vertical %}
+   <img src="{{image.thumb}}" width="auto" height="200" alt="{{image.name}}" class="thumb">
+   {% else %}
+   <img src="{{image.thumb}}" width="200" height="auto" alt="{{image.name}}" class="thumb">
+   {% endif %}
+ </a>
+ {% endfor %}
+</div>
+{% elif content.videos %}
+<span class="filesize">
+  <a target="_blank" href="{{content.videos[0].url|safe}}">{{content.videos[0].name}}</a> -
+  (<em>video/mp4, {{content.videos[0].size}}, {{content.videos[0].duration}}s</em>)
+</span>
+<br>
+<div class="image-container">
+ {% for video in content.videos %}
+ <a target="_blank" href="{{video.url}}" class="imglink" title="{{video.name}} - (video/mp4, {{video.size}}), {{video.duration}}s">
+   {% if video.thumb_vertical %}
+   <img src="{{video.thumb|safe}}" width="auto" height="200" alt="{{video.name}}" class="thumb">
+   {% else %}
+   <img src="{{video.thumb|safe}}" width="200" height="auto" alt="{{video.name}}" class="thumb">
+   {% endif %}
+ </a>
+ {% endfor %}
+</div>
+{% elif content.files %}
+<span class="filesize">
+  <a target="_blank" href="{{content.files[0].url|safe}}">{{content.files[0].name}}</a> -
+  (<em>{{content.files[0].mime}}, {{content.files[0].size}} bytes</em>)
+</span>
+<br>
+<div class="nothumb">Нет<br>уменьшенной<br>копии.</div>
+{% else %}
+<span class="filesize"></span>
+<div class="nothumb">Нет<br>уменьшенной<br>копии.</div>
+{% endif %}
