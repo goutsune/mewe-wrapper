@@ -354,6 +354,10 @@ class Mewe:
           video_dict['thumb'] = self._prepare_photo_media(media['photo'])
           video_dict['url'], video_dict['name'] = self._prepare_video_media(video)
           video_dict['width'] = min(media['photo']['size']['width'], 640)
+          video_dict['size'] = f'{media["photo"]["size"]["width"]}x{media["photo"]["size"]["height"]}'
+          video_dict['duration'] = video['duration']
+          video_dict['thumb_vertical'] = True if media['photo']['size']['width'] < \
+                                                  media['photo']['size']['height'] else False
 
           message['videos'].append(video_dict)
 
@@ -383,12 +387,15 @@ class Mewe:
         doc_dict = {}
         doc_dict['url'], doc_dict['name'] = self._prepare_document(document)
         doc_dict['mime'] = document['mime']
+        doc_dict['size'] = document['length']
         message['files'].append(doc_dict)
 
     # Referenced message
     if ref_post := post.get('refPost'):
       message['repost'] = self.prepare_post_contents(ref_post, user_list)
       message['repost']['author'] = self.resolve_user(ref_post['userId'], user_list)
+      message['repost']['author_id'] = ref_post['userId']
+      message['repost']['id'] = ref_post['postItemId']
       repost_date = datetime.fromtimestamp(ref_post['createdAt'])
       message['repost']['date'] = repost_date.strftime(r'%d %b %Y %H:%M:%S')
 
