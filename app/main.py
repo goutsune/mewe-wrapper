@@ -113,8 +113,6 @@ def retr_userfeed_rss(user_id):
 
 @app.route('/proxy')
 def proxy_media():
-  if request.method == 'HEAD':
-    return "OK"
 
   url = request.args.get('url')
   # MeWe reports some of types as octet-stream, hence this passing back and forth
@@ -130,7 +128,9 @@ def proxy_media():
   c.last_streamed_response = res
   return res.iter_content(chunk_size=1024), {
      'Content-Type': mime,
-     'Content-Length': content_length,
+     'Content-Length': res.headers['content-length'],
+     'Cache-Control': res.headers.get('cache-control',''),
+     'Expires': res.headers.get('expires',''),
      'Content-Disposition': f'inline; filename={quote(name)}'}
 
 # ###################### Webserver init
