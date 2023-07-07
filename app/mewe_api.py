@@ -7,7 +7,7 @@ from threading import Lock
 from urllib import parse as p
 
 from config import cookie_storage, user_agent, hostname
-from markdown_tools import MeweEmojiExtension
+from markdown_tools import MeweEmojiExtension, MeweMentionExtension
 
 
 class Mewe:
@@ -67,12 +67,11 @@ class Mewe:
         'nl2br',
         'sane_lists',
         'mdx_linkify',
-        MeweEmojiExtension(emoji_dict=self.emojis)])
-
+        MeweEmojiExtension(emoji_dict=self.emojis),
+        MeweMentionExtension()
+    ])
     markdown_instance.parser.blockprocessors.deregister('hashheader')  # breaks hashtags
     self.markdown = markdown_instance.convert
-    # TODO: Needs block processor for user links.
-    # Example: 'Для \ufeff@{{u_5c25c5da3c8bb1088cb5f62e}Naru Ootori}\ufeff приготовила.'
 
     self.refresh_lock = Lock()
 
