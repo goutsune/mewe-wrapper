@@ -48,6 +48,23 @@ def show_post(post_id):
   return render_template('wakaba_thread.html', post=post_obj)
 
 
+@app.route('/feed/')
+def retr_feed():
+  '''Displays subscription feed as a thread list
+  '''
+  # TODO: Implement pagination
+  limit = request.args.get('limit', '50')
+  pages = int(request.args.get('pages', '1'))
+
+  feed, users = c.get_feed(limit=limit, pages=pages)
+  posts, users = c.prepare_feed(feed, users)
+
+  title = 'Подписки'
+
+  return render_template(
+    'wakaba_board.html', contents=posts, title=title)
+
+
 @app.route('/userfeed/<string:user_id>')
 def retr_userfeed(user_id):
   '''Displays user feed as a thread list
