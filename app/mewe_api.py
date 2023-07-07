@@ -407,13 +407,7 @@ class Mewe:
     posts = []
 
     for post in feed:
-      # Retrieve extra media elements from post if there are more than 4
-      if post.get('mediasCount', 0) > 4 and retrieve_medias:
-        extra_medias, extra_users = self.get_post_medias(post)
-        post['medias'] = extra_medias  # FIXME: Only fetch remaining objects to save data?
-        users.update(extra_users)
-
-      msg = self.prepare_single_post(post, users)
+      msg = self.prepare_single_post(post, users, retrieve_medias)
       posts.append(msg)
 
     return posts, users
