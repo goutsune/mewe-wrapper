@@ -355,7 +355,7 @@ class Mewe:
           video_dict['url'], video_dict['name'] = self._prepare_video_media(video)
           video_dict['width'] = min(media['photo']['size']['width'], 640)
           video_dict['size'] = f'{media["photo"]["size"]["width"]}x{media["photo"]["size"]["height"]}'
-          video_dict['duration'] = video['duration']
+          video_dict['duration'] = video.get('duration','???')
           video_dict['thumb_vertical'] = True if media['photo']['size']['width'] < \
                                                   media['photo']['size']['height'] else False
 
@@ -407,7 +407,7 @@ class Mewe:
     posts = []
 
     for post in feed:
-      msg = self.prepare_single_post(post, users, retrieve_medias)
+      msg = self.prepare_single_post(post, users, retrieve_medias=retrieve_medias)
       posts.append(msg)
 
     return posts, users
