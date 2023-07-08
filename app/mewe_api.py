@@ -311,36 +311,42 @@ class Mewe:
   def prepare_post_contents(self, post, user_list):
     '''Reserializes MeWe post object for more convenient use with template output.
     '''
-    message = {}
-    message['text'] = self.markdown(post.get('text', ''))
-
-    message['link'] = {}
-    message['poll'] = {}
-    message['repost'] = None
-    message['images'] = []
-    message['videos'] = []
-    message['files'] = []
+    message = {
+      'text': self.markdown(post.get('text', '')),
+      'link': {},
+      'poll': {},
+      'repost': None,
+      'images': [],
+      'videos': [],
+      'files': [],
+    }
 
     # Link
     if link := post.get('link'):
-      message['link']['title'] = link.get('title', '')
-      message['link']['url'] = link['_links']['url']['href']
-      message['link']['text'] = link.get('description', '')
-      # For some reason link thumbnails are stored on sepparated server with full URI, no auth required
-      message['link']['thumb'] = link['_links'].get('thumbnail', {'href': ''})['href']
+      message['link'] = {
+        'title': link.get('title', ''),
+        'url': link['_links']['url']['href'],
+        'text': link.get('description', ''),
+        # For some reason link thumbnails are stored on sepparated server with full URI, no auth required
+        'thumb': link['_links'].get('thumbnail', {'href': ''})['href'],
+      }
 
     # Poll
     if poll := post.get('poll'):
-      message['poll']['text'] = poll['question']
       total_votes = sum([x['votes'] for x in poll['options']])
-      message['poll']['total_votes'] = total_votes
-      message['poll']['options'] = []
+
+      message['poll'] = {
+        'text': poll['question'],
+        'total_votes': total_votes,
+        'options': [],
+      }
 
       for vote in poll['options']:
-        vote_dict = {}
-        vote_dict['percent'] = round(vote['votes'] / total_votes * 100)
-        vote_dict['votes'] = vote['votes']
-        vote_dict['text'] = vote['text']
+        vote_dict = {
+          'percent': round(vote['votes'] / total_votes * 100),
+          'votes': vote['votes'],
+          'text': vote['text'],
+        }
 
         message['poll']['options'].append(vote_dict)
 
@@ -350,54 +356,66 @@ class Mewe:
 
         # Video with associated photo object
         if video := media.get('video'):
-          video_dict = {}
-          video_dict['thumb'] = self._prepare_photo_media(media['photo'])
-          video_dict['url'], video_dict['name'] = self._prepare_video_media(video)
-          video_dict['width'] = min(media['photo']['size']['width'], 640)
-          video_dict['size'] = f'{media["photo"]["size"]["width"]}x{media["photo"]["size"]["height"]}'
-          video_dict['duration'] = video.get('duration','???')
-          video_dict['thumb_vertical'] = True if media['photo']['size']['width'] < \
-                                                  media['photo']['size']['height'] else False
+          prepared_url, prepared_name = self._prepare_video_media(video)
+          media_photo_size = media['photo']['size']
+
+          video_dict = {
+            'thumb': self._prepare_photo_media(media['photo']),
+            'url': prepared_url,
+            'name': prepared_name,
+            'width': min(media['photo']['size']['width'], 640),
+            'size': f'{media["photo"]["size"]["width"]}x{media["photo"]["size"]["height"]}',
+            'duration': video.get('duration','???'),
+            'thumb_vertical': True if media_photo_size['width'] < media_photo_size['height'] else False,
+          }
 
           message['videos'].append(video_dict)
 
         # Image with no *known* associated media object
         elif photo := media.get('photo'):
-          image_dict = {}
-          image_dict['url'] = self._prepare_photo_media(photo)
-          image_dict['thumb'] = self._prepare_photo_media(photo, thumb=True)
-          image_dict['thumb_vertical'] = True if photo["size"]["width"] < photo["size"]["height"] else False
-          image_dict['id'] = photo['id']
-          image_dict['mime'] = photo['mime']
-          image_dict['size'] = f'{photo["size"]["width"]}x{photo["size"]["height"]}'
+          image_dict = {
+            'url': self._prepare_photo_media(photo),
+            'thumb': self._prepare_photo_media(photo, thumb=True),
+            'thumb_vertical': True if photo["size"]["width"] < photo["size"]["height"] else False,
+            'id': photo['id'],
+            'mime': photo['mime'],
+            'size': f'{photo["size"]["width"]}x{photo["size"]["height"]}',
+            # TODO: Add image captions, need more data
+            'text': '',
+          }
 
           if ext := self.mime_mapping.get(photo['mime']):
             image_dict['name'] = f'{photo["id"]}.{ext}'
           else:
             image_dict['name'] = photo['id']
 
-          # TODO: Add image captions, need more data
-          image_dict['text'] = ''
-
           message['images'].append(image_dict)
 
     # Attachments
     if files := post.get('files'):
       for document in files:
-        doc_dict = {}
-        doc_dict['url'], doc_dict['name'] = self._prepare_document(document)
-        doc_dict['mime'] = document['mime']
-        doc_dict['size'] = document['length']
+        doc_url, doc_name = self._prepare_document(document)
+        doc_dict = {
+          'url': doc_url,
+          'name': doc_name,
+          'mime': document['mime'],
+          'size': document['length'],
+        }
+
         message['files'].append(doc_dict)
 
     # Referenced message
     if ref_post := post.get('refPost'):
       message['repost'] = self.prepare_post_contents(ref_post, user_list)
-      message['repost']['author'] = self.resolve_user(ref_post['userId'], user_list)
-      message['repost']['author_id'] = ref_post['userId']
-      message['repost']['id'] = ref_post['postItemId']
       repost_date = datetime.fromtimestamp(ref_post['createdAt'])
-      message['repost']['date'] = repost_date.strftime(r'%d %b %Y %H:%M:%S')
+
+      message['repost'].update({
+        'author': self.resolve_user(ref_post['userId'], user_list),
+        'author_id': ref_post['userId'],
+        'id': ref_post['postItemId'],
+        'date': repost_date.strftime(r'%d %b %Y %H:%M:%S')
+      })
+
 
     return message
 
@@ -413,7 +431,6 @@ class Mewe:
     return posts, users
 
   def _prepare_comment_photo(self, photo):
-    prepared = {}
 
     url_template = photo['_links']['img']['href']
     mime = photo['mime']
@@ -427,12 +444,14 @@ class Mewe:
       prepared_url = url_template.format(imageSize=size)
       prepared_thumb = url_template.format(imageSize='400x400')
 
-    prepared['url'] = f'{hostname}/proxy?url={prepared_url}&mime={mime}&name={name}'
-    prepared['thumb'] = f'{hostname}/proxy?url={prepared_thumb}&mime={mime}&name={name}'
-    prepared['thumb_vertical'] = True if photo['size']['width'] < photo['size']['height'] else False
-    prepared['name'] = name
-    prepared['size'] = size
-    prepared['mime'] = mime
+    prepared = {
+      'url': f'{hostname}/proxy?url={prepared_url}&mime={mime}&name={name}',
+      'thumb': f'{hostname}/proxy?url={prepared_thumb}&mime={mime}&name={name}',
+      'thumb_vertical': True if photo['size']['width'] < photo['size']['height'] else False,
+      'name': name,
+      'size': size,
+      'mime': mime,
+    }
 
     return prepared
 
@@ -441,17 +460,20 @@ class Mewe:
     '''
     comments = []
     for raw_comment in comments_feed:
-      comment = {}
-      comment['text'] = self.markdown(raw_comment.get('text', ''))
+      comment_date = datetime.fromtimestamp(raw_comment['createdAt'])
+      comment = {
+        'text': self.markdown(raw_comment.get('text', '')),
+        'user_id': raw_comment['userId'],
+        'id': raw_comment['id'],
+        'date': comment_date.strftime(r'%d %b %Y %H:%M:%S'),
+        'timestamp': raw_comment['createdAt'],
+      }
+
       if owner := raw_comment.get('owner'):
         comment['user'] = owner['name']
       else:
         comment['user'] = users[raw_comment['userId']]['name']
-      comment['user_id'] = raw_comment['userId']
-      comment['id'] = raw_comment['id']
-      comment_date = datetime.fromtimestamp(raw_comment['createdAt'])
-      comment['date'] = comment_date.strftime(r'%d %b %Y %H:%M:%S')
-      comment['timestamp'] = raw_comment['createdAt']
+
       if photo_obj := raw_comment.get('photo'):
         comment['photo'] = self._prepare_comment_photo(photo_obj)
 
@@ -486,35 +508,35 @@ class Mewe:
 
       post['comments']['feed'] = response['feed']
 
-    prepared_post = {}
-    prepared_post['content'] = self.prepare_post_contents(post, users)
-    # Message schema is a bit different for comments, so we can't just reuse prepare_post_contents
-    if post.get('comments'):
-      prepared_post['comments'] = self.prepare_post_comments(post['comments']['feed'], users)
-    prepared_post['author'] = users[post['userId']]['name']
-    prepared_post['author_id'] = post['userId']
-    prepared_post['id'] = post['postItemId']
     post_date = datetime.fromtimestamp(post['createdAt'])
-    prepared_post['date'] = post_date.strftime(r'%d %b %Y %H:%M:%S')
-    if post.get('comments'):
-      prepared_post['missing_count'] = post['comments']['total'] - len(post['comments']['feed'])
-    else:
-      prepared_post['missing_count'] = 0
+    prepared_post = {
+      'content': self.prepare_post_contents(post, users),
+      # Message schema is a bit different for comments, so we can't just reuse prepare_post_contents
+      'author': users[post['userId']]['name'],
+      'author_id': post['userId'],
+      'id': post['postItemId'],
+      'date': post_date.strftime(r'%d %b %Y %H:%M:%S'),
 
-    # Extra meta for RSS
-    prepared_post['categories'] = [x for x in post.get('hashTags', [])]
+      'comments': self.prepare_post_comments(post['comments']['feed'], users) \
+                  if post.get('comments') else [],
+      'missing_count': post['comments']['total'] - len(post['comments']['feed']) \
+                       if post.get('comments') else 0,
+
+      # Extra meta for RSS
+      'categories': [x for x in post.get('hashTags', [])],
+      'author_rss': self.resolve_user(post['userId'], users),
+      'date_rss': post_date.strftime(r'%Y-%m-%dT%H:%M:%S%z'),
+      'link': f'{hostname}/viewpost/{post["postItemId"]}',
+    }
+
     if album := post.get('album'):
       prepared_post['categories'].insert(0, album)
-    prepared_post['author_rss'] = self.resolve_user(post['userId'], users)
-    prepared_post['date_rss'] = post_date.strftime(r'%Y-%m-%dT%H:%M:%S%z')
     if post['text'] and len(post['text']) > 60:
       prepared_post['title'] = post['text'][0:60] + '…'
     else:
       prepared_post['title'] = post['text']
     if not prepared_post['title']:
       prepared_post['title'] = post_date.strftime(r'%d %b %Y %H:%M:%S')
-
-    prepared_post['link'] = f'{hostname}/viewpost/{post["postItemId"]}'
 
     return prepared_post
 
