@@ -47,7 +47,7 @@ class MeweMentionInlineProcessor(InlineProcessor):
     el = etree.Element('a')
     el.set('href', f'/userfeed/{user_id}')
     el.set('class', 'user_mention')
-    el.text = name
+    el.text = f'@{name}'
 
     return el, m.start(0), m.end(0)
 
