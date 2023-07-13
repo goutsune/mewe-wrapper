@@ -458,6 +458,7 @@ class Mewe:
       'url': f'{hostname}/proxy?url={prepared_url}&mime={mime}&name={name}',
       'thumb': f'{hostname}/proxy?url={prepared_thumb}&mime={mime}&name={name}',
       'thumb_vertical': True if photo['size']['width'] < photo['size']['height'] else False,
+      'id': photo['id'],
       'name': name,
       'size': size,
       'mime': mime,
@@ -477,6 +478,7 @@ class Mewe:
         'id': raw_comment['id'],
         'date': comment_date.strftime(r'%d %b %Y %H:%M:%S'),
         'timestamp': raw_comment['createdAt'],
+        'images': [],
       }
 
       if owner := raw_comment.get('owner'):
@@ -485,7 +487,7 @@ class Mewe:
         comment['user'] = users[raw_comment['userId']]['name']
 
       if photo_obj := raw_comment.get('photo'):
-        comment['photo'] = self._prepare_comment_photo(photo_obj)
+        comment['images'].append(self._prepare_comment_photo(photo_obj))
 
       if link_obj := raw_comment.get('link'):
         comment['link'] = self._prepare_link(link_obj)

@@ -55,6 +55,9 @@
   <div class="nothumb">Нет<br>уменьшенной<br>копии.</div>
   {% endif %}
 {% else %}
-<span class="filesize"></span>
-<div class="nothumb">Нет<br>уменьшенной<br>копии.</div>
+  {% if is_comment %}
+  {% else %}
+    <span class="filesize"></span>
+    <div class="nothumb">Нет<br>уменьшенной<br>копии.</div>
+  {% endif %}
 {% endif %}
