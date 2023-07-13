@@ -6,18 +6,8 @@
 {% block content %}
   <div class="postarea">
    <form id="postform" action="/post/" method="post" enctype="multipart/form-data">
-    <input type="hidden" name="task" value="post">
-    <input type="hidden" name="parent" value="{{user_id}}">
-    <input type="hidden" name="nya1">
     <table width="1%">
      <tbody>
-      <tr>
-        <td class="postblock">Получатель</td>
-        <td>
-          <input type="text" name="nya3" size="35">
-          <input type="submit" value="Отправить">
-        </td>
-      </tr>
       <tr>
         <td class="postblock">Сообщение</td>
         <td>
@@ -35,7 +25,7 @@
   <hr>
   {% with board_view=True %}
     {% for post in contents %}
-      {% include 'wakaba_post.html' %}
+      {% include 'wakaba_thread.html' %}
     {% endfor %}
   {% endwith %}
   <table border="1">

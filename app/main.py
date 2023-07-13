@@ -45,7 +45,7 @@ def show_post(post_id):
   result = c.get_post(post_id)
   users = {user['id']: user for user in result['users']}
   post_obj = c.prepare_single_post(result['post'], users, load_all_comments=True, retrieve_medias=True)
-  return render_template('wakaba_thread.html', post=post_obj)
+  return render_template('wakaba_viewthread.html', post=post_obj)
 
 
 @app.route('/feed/')
