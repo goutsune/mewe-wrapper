@@ -347,6 +347,7 @@ class Mewe:
     '''
     message = {
       'text': self.markdown(post.get('text', '')),
+      'album': post.get('album', ''),
       'link': {},
       'poll': {},
       'repost': None,

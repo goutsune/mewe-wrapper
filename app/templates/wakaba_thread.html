@@ -6,7 +6,7 @@
 
   <div style="display: inline-block;">
     <label>
-     <span class="filetitle"></span>
+     <span class="filetitle">{{post.content.album}}</span>
      <span class="postername">{{post.author}}</span>
      <a class="posterlink" href="/userfeed/{{post.author_id}}" target="_blank">▶</a>
      {{post.date}}
@@ -24,7 +24,7 @@
       {% endwith %}
       {% with post=post.content.repost %}
         <label>
-         <span class="filetitle"></span>
+         <span class="filetitle">{{post.content.album}}</span>
          <span class="postername">{{post.author}}</span>
          <a class="posterlink" href="/userfeed/{{post.author_id}}" target="_blank">▶</a>
          {{post.date}}
