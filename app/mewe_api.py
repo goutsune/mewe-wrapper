@@ -68,8 +68,8 @@ class Mewe:
         'sane_lists',
         'mdx_linkify',
         MeweEmojiExtension(emoji_dict=self.emojis),
-        MeweMentionExtension()
-    ])
+        MeweMentionExtension()]
+    )
     markdown_instance.parser.blockprocessors.deregister('hashheader')  # breaks hashtags
     self.markdown = markdown_instance.convert
 
@@ -196,9 +196,9 @@ class Mewe:
     for page in range(pages):
       # We'll loop through requested number of pages filling global feed/users objects here.
       if not page and limit:  # range start from 0 so, eeh
-        payload ['limit'] = limit
+        payload['limit'] = limit
         if before:
-          payload ['b'] = before
+          payload['b'] = before
 
       response = self.invoke_get(endpoint, payload)
 
@@ -281,7 +281,7 @@ class Mewe:
 
   # ################### Formatting helpers
 
-  def _prepare_photo_media(self, photo, thumb=False):
+  def _prepare_photo(self, photo, thumb=False):
     if thumb:
       photo_url = photo['_links']['img']['href'].format(imageSize='400x400', static=1)
     else:
@@ -293,7 +293,7 @@ class Mewe:
     url = f'{hostname}/proxy?url={quoted_url}&mime={mime}&name={name}'
     return url
 
-  def _prepare_video_media(self, video):
+  def _prepare_video(self, video):
     video_url = video['_links']['linkTemplate']['href'].format(resolution='original')
     quoted_url = quote(video_url, safe='')
     name = video['name']
@@ -352,16 +352,16 @@ class Mewe:
 
         # Video with associated photo object
         if video := media.get('video'):
-          prepared_url, prepared_name = self._prepare_video_media(video)
+          prepared_url, prepared_name = self._prepare_video(video)
           media_photo_size = media['photo']['size']
 
           video_dict = {
-            'thumb': self._prepare_photo_media(media['photo']),
+            'thumb': self._prepare_photo(media['photo']),
             'url': prepared_url,
             'name': prepared_name,
             'width': min(media['photo']['size']['width'], 640),
             'size': f'{media["photo"]["size"]["width"]}x{media["photo"]["size"]["height"]}',
-            'duration': video.get('duration','???'),
+            'duration': video.get('duration', '???'),
             'thumb_vertical': True if media_photo_size['width'] < media_photo_size['height'] else False,
           }
 
@@ -370,8 +370,8 @@ class Mewe:
         # Image with no *known* associated media object
         elif photo := media.get('photo'):
           image_dict = {
-            'url': self._prepare_photo_media(photo),
-            'thumb': self._prepare_photo_media(photo, thumb=True),
+            'url': self._prepare_photo(photo),
+            'thumb': self._prepare_photo(photo, thumb=True),
             'thumb_vertical': True if photo["size"]["width"] < photo["size"]["height"] else False,
             'id': photo['id'],
             'mime': photo['mime'],
@@ -411,7 +411,6 @@ class Mewe:
         'id': ref_post['postItemId'],
         'date': repost_date.strftime(r'%d %b %Y %H:%M:%S')
       })
-
 
     return message
 
