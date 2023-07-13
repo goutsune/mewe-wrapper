@@ -38,4 +38,22 @@
       {% include 'wakaba_post.html' %}
     {% endfor %}
   {% endwith %}
+  <table border="1">
+    <tbody>
+      <tr>
+        <td>
+          <form method="get" action=".">
+            <input value="В начало" type="submit">
+          </form>
+        </td>
+        <td>
+          <form method="get" action="">
+            <input value="{{ contents[-1].id }}" type="hidden" name="b">
+            <input value="{{ contents[0].id }}" type="hidden" name="a">
+            <input value="Далее" type="submit">
+          </form>
+        </td>
+      </tr>
+    </tbody>
+  </table>
 {% endblock %}

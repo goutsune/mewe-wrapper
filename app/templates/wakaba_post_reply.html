@@ -7,7 +7,7 @@
       <input type="checkbox" name="delete" value="{{comment.id}}">
       <span class="replytitle"></span>
       <span class="commentpostername">{{comment.user}}</span>
-      <a class="posterlink" href="/userfeed/{{comment.user_id}}" target="_blank">▶</a>
+      <a class="posterlink" href="/userfeed/{{comment.user_id}}">▶</a>
       {{comment.date}}
      </label>
      <span class="reflink"><a href="javascript:insert(&#39;&gt;&gt;{{comment.id}}&#39;)">№{{comment.id}}</a></span>
@@ -26,6 +26,21 @@
       <img src="{{comment.photo.thumb}}" width="200" height="auto" alt="{{comment.photo.name}}" class="thumb">
       {% endif %}
      </a>
+     {% elif comment.link %}
+      <span class="filesize">
+        <a target="_blank" href="{{ comment.link.url|safe }}">Referenced link</a> -
+        (<em>{{ comment.link.title }}</em>)
+      </span>
+      <br>
+      {% if comment.link.thumb %}
+      <div class="image-container">
+        <a class="imglink" target="_blank" href="{{ comment.link.url|safe }}" title="{{comment.link.text}}">
+          <img src="{{ comment.link.thumb|safe }}" width="200" height="auto" alt="{{ comment.link.title }}" class="thumb">
+        </a>
+      </div>
+      {% else %}
+      <div class="nothumb" title="{{comment.link.text}}">Нет<br>уменьшенной<br>копии.</div>
+      {% endif %}
      {% endif %}
      <div class="post">{{comment.text|safe}}</div>
     </td>

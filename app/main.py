@@ -53,10 +53,11 @@ def retr_feed():
   '''Displays subscription feed as a thread list
   '''
   # TODO: Implement pagination
-  limit = request.args.get('limit', '50')
+  limit = request.args.get('limit', '30')
   pages = int(request.args.get('pages', '1'))
+  before = request.args.get('b')
 
-  feed, users = c.get_feed(limit=limit, pages=pages)
+  feed, users = c.get_feed(limit=limit, pages=pages, before=before)
   posts, users = c.prepare_feed(feed, users)
 
   title = 'Подписки'
@@ -70,10 +71,11 @@ def retr_userfeed(user_id):
   '''Displays user feed as a thread list
   '''
   # TODO: Implement pagination
-  limit = request.args.get('limit', '50')
+  limit = request.args.get('limit', '30')
   pages = int(request.args.get('pages', '1'))
+  before = request.args.get('b')
 
-  feed, users = c.get_user_feed(user_id, limit=limit, pages=pages)
+  feed, users = c.get_user_feed(user_id, limit=limit, pages=pages, before=before)
   posts, users = c.prepare_feed(feed, users)
 
   user = users[user_id]

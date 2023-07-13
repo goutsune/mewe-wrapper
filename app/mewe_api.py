@@ -183,7 +183,7 @@ class Mewe:
     r = self.invoke_get(f'{self.base}/v2/mycontacts/user/{user_id}')
     return r
 
-  def _get_feed(self, endpoint, limit=None, pages=1):
+  def _get_feed(self, endpoint, limit=None, pages=1, before=None):
     '''Method to loop through pages that return feed objects along with respective users.
     For the time being at least 4 endpoints return that type:
       Main feed, Group feed, User feed, Post comments (lol)
@@ -196,7 +196,9 @@ class Mewe:
     for page in range(pages):
       # We'll loop through requested number of pages filling global feed/users objects here.
       if not page and limit:  # range start from 0 so, eeh
-        payload = {'limit': [limit]}
+        payload ['limit'] = limit
+        if before:
+          payload ['b'] = before
 
       response = self.invoke_get(endpoint, payload)
 
@@ -218,17 +220,17 @@ class Mewe:
 
     return feed, users
 
-  def get_feed(self, limit=30, pages=1):
+  def get_feed(self, limit=30, pages=1, before=None):
     '''Invokes home/allfeed method to fetch home feed.
     '''
     endpoint = f'{self.base}/v2/home/allfeed'
-    return self._get_feed(endpoint, limit, pages)
+    return self._get_feed(endpoint, limit, pages, before)
 
-  def get_user_feed(self, user_id, limit=30, pages=1):
+  def get_user_feed(self, user_id, limit=30, pages=1, before=None):
     '''Invokes home/user/{user_id}/postsfeed method to fetch single user posts
     '''
     endpoint = f'{self.base}/v2/home/user/{user_id}/postsfeed'
-    return self._get_feed(endpoint, limit, pages)
+    return self._get_feed(endpoint, limit, pages, before)
 
   def get_post(self, post_id):
     '''Invokes home/post/{post_id} method to fetch single post.
@@ -323,13 +325,7 @@ class Mewe:
 
     # Link
     if link := post.get('link'):
-      message['link'] = {
-        'title': link.get('title', ''),
-        'url': link['_links']['url']['href'],
-        'text': link.get('description', ''),
-        # For some reason link thumbnails are stored on sepparated server with full URI, no auth required
-        'thumb': link['_links'].get('thumbnail', {'href': ''})['href'],
-      }
+      message['link'] = self._prepare_link(link)
 
     # Poll
     if poll := post.get('poll'):
@@ -430,6 +426,18 @@ class Mewe:
 
     return posts, users
 
+  def _prepare_link(self, link):
+    prepared_link = {
+      'title': link.get('title', link['_links']['urlHost']['href']),
+      'url': link['_links']['url']['href'],
+      'text': link.get('description', ''),
+      # For some reason link thumbnails are stored on sepparated server with full URI, no auth required
+      'thumb': link['_links'].get('thumbnail', {'href': ''})['href'],
+    }
+
+    return prepared_link
+
+
   def _prepare_comment_photo(self, photo):
 
     url_template = photo['_links']['img']['href']
@@ -477,6 +485,9 @@ class Mewe:
       if photo_obj := raw_comment.get('photo'):
         comment['photo'] = self._prepare_comment_photo(photo_obj)
 
+      if link_obj := raw_comment.get('link'):
+        comment['link'] = self._prepare_link(link_obj)
+
       if raw_comment.get('repliesCount') and 'replies' in raw_comment:
         comment['replies'] = self.prepare_post_comments(raw_comment['replies'], users)
 
@@ -517,9 +528,9 @@ class Mewe:
       'id': post['postItemId'],
       'date': post_date.strftime(r'%d %b %Y %H:%M:%S'),
 
-      'comments': self.prepare_post_comments(post['comments']['feed'], users) \
+      'comments': self.prepare_post_comments(post['comments']['feed'], users)
                   if post.get('comments') else [],
-      'missing_count': post['comments']['total'] - len(post['comments']['feed']) \
+      'missing_count': post['comments']['total'] - len(post['comments']['feed'])
                        if post.get('comments') else 0,
 
       # Extra meta for RSS
@@ -549,6 +560,8 @@ def generate_emoji_dict():
     * Convert to class and provide dict-like object that dynamically handles emoji pack updates
     * Set up rudimentary caching in form of JSON dump with timestamp with periodical checks
   '''
+  #return {}  # FIXME: Uncomment this after adding emoji cache, baka
+
   _base = 'https://cdn.mewe.com'
   r = get(f'{_base}/emoji/build-info.json')
   r.raise_for_status()
