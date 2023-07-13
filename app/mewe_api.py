@@ -312,8 +312,9 @@ class Mewe:
 
   def _prepare_link(self, link):
     prepared_link = {
-      'title': link.get('title', link['_links']['urlHost']['href']),
+      'title': link.get('title', 'No Title'),
       'url': link['_links']['url']['href'],
+      'name': link['_links']['urlHost']['href'],
       'text': link.get('description', ''),
       # For some reason link thumbnails are stored on sepparated server with full URI, no auth required
       'thumb': link['_links'].get('thumbnail', {'href': ''})['href'],

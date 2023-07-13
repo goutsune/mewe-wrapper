@@ -41,8 +41,8 @@
 <div class="nothumb">Нет<br>уменьшенной<br>копии.</div>
 {% elif content.link %}
 <span class="filesize">
-  <a target="_blank" href="{{ content.link.url|safe }}">Referenced link</a> -
-  (<em>{{ content.link.title }}</em>)
+  <a target="_blank" href="{{ content.link.url|safe }}">{{ content.link.title }}</a> -
+  (<em>link, {{ content.link.name }}</em>)
 </span>
 <br>
   {% if content.link.thumb %}
