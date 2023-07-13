@@ -310,6 +310,37 @@ class Mewe:
     url = f'{hostname}/proxy?url={quoted_url}&mime={mime}&name={name}'
     return url, name
 
+  def _prepare_link(self, link):
+    prepared_link = {
+      'title': link.get('title', link['_links']['urlHost']['href']),
+      'url': link['_links']['url']['href'],
+      'text': link.get('description', ''),
+      # For some reason link thumbnails are stored on sepparated server with full URI, no auth required
+      'thumb': link['_links'].get('thumbnail', {'href': ''})['href'],
+    }
+
+    return prepared_link
+
+  def _prepare_poll(self, poll):
+    total_votes = sum([x['votes'] for x in poll['options']])
+
+    prepared_poll = {
+      'text': poll['question'],
+      'total_votes': total_votes,
+      'options': [],
+    }
+
+    for vote in poll['options']:
+      vote_dict = {
+        'percent': round(vote['votes'] / total_votes * 100),
+        'votes': vote['votes'],
+        'text': vote['text'],
+      }
+
+      prepared_poll['options'].append(vote_dict)
+
+    return prepared_poll
+
   def prepare_post_contents(self, post, user_list):
     '''Reserializes MeWe post object for more convenient use with template output.
     '''
@@ -329,22 +360,7 @@ class Mewe:
 
     # Poll
     if poll := post.get('poll'):
-      total_votes = sum([x['votes'] for x in poll['options']])
-
-      message['poll'] = {
-        'text': poll['question'],
-        'total_votes': total_votes,
-        'options': [],
-      }
-
-      for vote in poll['options']:
-        vote_dict = {
-          'percent': round(vote['votes'] / total_votes * 100),
-          'votes': vote['votes'],
-          'text': vote['text'],
-        }
-
-        message['poll']['options'].append(vote_dict)
+      message['poll'] = self._prepare_poll(poll)
 
     # Medias (e.g. video or photo)
     if medias := post.get('medias'):
@@ -425,20 +441,7 @@ class Mewe:
 
     return posts, users
 
-  def _prepare_link(self, link):
-    prepared_link = {
-      'title': link.get('title', link['_links']['urlHost']['href']),
-      'url': link['_links']['url']['href'],
-      'text': link.get('description', ''),
-      # For some reason link thumbnails are stored on sepparated server with full URI, no auth required
-      'thumb': link['_links'].get('thumbnail', {'href': ''})['href'],
-    }
-
-    return prepared_link
-
-
   def _prepare_comment_photo(self, photo):
-
     url_template = photo['_links']['img']['href']
     mime = photo['mime']
     name = photo['name']
