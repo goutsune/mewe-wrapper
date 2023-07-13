@@ -63,7 +63,7 @@ def retr_feed():
   title = 'Подписки'
 
   return render_template(
-    'wakaba_board.html', contents=posts, title=title)
+    'wakaba_board.html', contents=posts, title=title, can_post=True)
 
 
 @app.route('/userfeed/<string:user_id>')
@@ -82,7 +82,7 @@ def retr_userfeed(user_id):
   title = f'{user["name"]}'
 
   return render_template(
-    'wakaba_board.html', contents=posts, title=title)
+    'wakaba_board.html', contents=posts, title=title, can_post=False)
 
 
 @app.route('/userfeed_rss/<string:user_id>')

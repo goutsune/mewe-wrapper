@@ -4,6 +4,7 @@
 {% block logo_title %}MeWeちゃん — {{title}}{% endblock %}
 
 {% block content %}
+  {% if can_post %}
   <div class="postarea">
    <form id="postform" action="/post/" method="post" enctype="multipart/form-data">
     <table width="1%">
@@ -23,6 +24,7 @@
    </form>
   </div>
   <hr>
+  {% endif %}
   {% with board_view=True %}
     {% for post in contents %}
       {% include 'wakaba_thread.html' %}
