@@ -4,3 +4,5 @@
 __pycache__
 /app/*.session*
 /mewe.com_cookies.txt
+/cache
+session_cache.sqlite
