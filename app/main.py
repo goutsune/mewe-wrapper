@@ -55,7 +55,7 @@ def post_reply():
   post_id = request.form['post_id']
   reply_to = request.form.get('reply_to')
   text = request.form['text']
-  postredir = int(request.form['postredir'])
+  postredir = int(request.form.get('postredir', '0'))
 
   try:
     if reply_to:
