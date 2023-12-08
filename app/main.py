@@ -31,11 +31,9 @@ def make_index():
   '''Generates index page with latest medias and posts.
   Also shows user list and group list'''
   medias = c.prepare_media_feed(limit=10)
-  posts = c.prepare_feed(limit=10, only_text=True)
-  groups = c.get_groups()
-  albums = c.get_albums()
+  posts = c.prepare_feed(limit=10, with_message=True)
 
-  return render_template('wakaba_index.html', medias=medias, posts=posts, groups=groups, albums=albums)
+  return render_template('wakaba_index.html', medias=medias, posts=posts, last_active=last_active)
 
 
 @app.route('/viewpost/<string:post_id>')
