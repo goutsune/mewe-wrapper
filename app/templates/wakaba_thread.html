@@ -18,6 +18,12 @@
   <div class="post">
     {{ post.content.text|safe }}
     {% if post.content.repost %}
+      {% if post.content.repost.deleted %}
+      <div class="repost">
+        <p>Post unavailable<br>
+This post may have been deleted or the person that shared it may have changed its permissions.</p>
+      </div>
+      {% else %}
       <div class="repost">
       {% with content=post.content.repost %}
         {% include 'wakaba_post_content.html' %}
@@ -34,6 +40,7 @@
         [<a href="/viewpost/{{post.id}}" target="_blank">Ответ</a>]
         {{ post.text|safe }}
       {% endwith %}
+      {% endif %}
       </div>
     {% endif %}
   </div>

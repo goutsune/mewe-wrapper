@@ -459,6 +459,10 @@ class Mewe:
         'date': repost_date.strftime(r'%d %b %Y %H:%M:%S')
       })
 
+    # Deleted reference is marked with this flag outside refPost object
+    if post.get('refRemoved'):
+      message['repost'] = {'deleted': True}
+
     return message
 
   def prepare_feed(self, feed, users, retrieve_medias=False):
