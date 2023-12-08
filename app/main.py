@@ -56,13 +56,17 @@ def post_reply():
   reply_to = request.form.get('reply_to')
   text = request.form['text']
   postredir = int(request.form.get('postredir', '0'))
+  if 'file' in request.files and request.files['file'].filename:
+    media = c.upload_comment_photo(request.files['file'])
+  else:
+    media = None
 
   try:
     if reply_to:
-      c.post_reply(reply_to, text)
+      c.post_reply(reply_to, text, media)
 
     else:
-      c.post_comment(post_id, text)
+      c.post_comment(post_id, text, media)
 
   except ValueError as e:
     return str(e)
@@ -82,6 +86,10 @@ def new_post():
   text = request.form['text']
   postredir = int(request.form['postredir'])
   visibility = request.form['visibility']
+  if 'file' in request.files and request.files['file'].filename:
+    media = c.upload_photo(request.files['file'])
+  else:
+    media = None
 
   try:
       if visibility == 'all':
@@ -94,7 +102,7 @@ def new_post():
         everyone = False
         friends_only = False
 
-      res = c.make_post(text, everyone, friends_only)
+      res = c.make_post(text, everyone, friends_only, media)
 
   except ValueError as e:
     return str(e)

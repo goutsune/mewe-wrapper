@@ -1,4 +1,4 @@
-<form id="delform" action="/post" method="post">
+<form id="delform" action="/post" method="post" enctype="multipart/form-data">
  <div id="thread-{{post.id}}">
   {% with content=post.content %}
     {% include 'wakaba_post_content.html' %}

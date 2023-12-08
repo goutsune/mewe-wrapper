@@ -331,7 +331,7 @@ class Mewe:
 
   # ################### Data posting helpers
 
-  def make_post(self, text, everyone=False, friends_only=False, medias=None):
+  def make_post(self, text, everyone=False, friends_only=False, media=None):
     endpoint = f'{self.base}/v2/home/post'
 
     payload = {
@@ -339,18 +339,60 @@ class Mewe:
       'everyone': everyone,
       'closeFriends': friends_only,
     }
+    if media is not None:
+      if 'image' in media['type']:
+        payload['imageIds'] = [media['id']]
+      else:
+        # FIXME: check how other media types are uploaded
+        raise ProgrammingError('HOW DO I NONIMAGES')
 
     return self.invoke_post(endpoint, json=payload)
 
-  def post_comment(self, post_id, text, medias=None):
+  def _post_to_thread(self, endpoint, text, media):
+    if media is not None:
+      if 'image' in media['type']:
+        comment_type = 'photo'
+      else:
+        # FIXME: check how other media types are uploaded
+        raise ProgrammingError('HOW DO I NONIMAGES')
+      payload = {
+        'text': text,
+        "fileId": media['id'],
+        "commentType": comment_type}
+    else:
+      payload = {'text': text}
+
+    return self.invoke_post(endpoint, json=payload)
+
+  def post_comment(self, post_id, text, media=None):
     endpoint = f'{self.base}/v2/home/post/{post_id}/comments'
 
-    return self.invoke_post(endpoint, json={'text': text})
+    return self._post_to_thread(endpoint, text, media)
 
-  def post_reply(self, comment_id, text, medias=None):
+  def post_reply(self, comment_id, text, media=None):
     endpoint = f'{self.base}/v2/comments/{comment_id}/reply'
 
-    return self.invoke_post(endpoint, json={'text': text})
+    return self._post_to_thread(endpoint, text, media)
+
+  def upload_photo(self, file_obj):
+    endpoint = f'{self.base}/v2/photo/pt'
+
+    file_dict = {'file': (
+      file_obj.filename,
+      file_obj.stream,
+      file_obj.content_type,
+    )}
+    return self.invoke_post(endpoint, files=file_dict)
+
+  def upload_comment_photo(self, file_obj):
+    endpoint = f'{self.base}/v2/photo/cm'
+
+    file_dict = {'file': (
+      file_obj.filename,
+      file_obj.stream,
+      file_obj.content_type,
+    )}
+    return self.invoke_post(endpoint, files=file_dict)
 
   # ################### Formatting helpers
 
