@@ -28,6 +28,7 @@ def cleanup():
 # ###################### App routes
 @app.route('/')
 def make_index():
+  # FIXME: Finish main page display someday, lol
   '''Generates index page with latest medias and posts.
   Also shows user list and group list'''
   medias = c.prepare_media_feed(limit=10)
@@ -110,7 +111,6 @@ def new_post():
 def retr_feed():
   '''Displays subscription feed as a thread list
   '''
-  # TODO: Implement pagination
   limit = request.args.get('limit', '30')
   pages = int(request.args.get('pages', '1'))
   before = request.args.get('b')
@@ -128,7 +128,6 @@ def retr_feed():
 def retr_userfeed(user_id):
   '''Displays user feed as a thread list
   '''
-  # TODO: Implement pagination
   limit = request.args.get('limit', '30')
   pages = int(request.args.get('pages', '1'))
   before = request.args.get('b')
@@ -189,9 +188,10 @@ def proxy_media():
   return res.iter_content(chunk_size=1024), {
      'Content-Type': mime,
      'Content-Length': res.headers['content-length'],
-     'Cache-Control': res.headers.get('cache-control',''),
-     'Expires': res.headers.get('expires',''),
+     'Cache-Control': res.headers.get('cache-control', ''),
+     'Expires': res.headers.get('expires', ''),
      'Content-Disposition': f'inline; filename={quote(name)}'}
+
 
 # ###################### Webserver init
 if __name__ == "__main__":

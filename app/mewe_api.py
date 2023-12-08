@@ -34,16 +34,17 @@ class Mewe:
     'image/webp': 'webp',
   }
   _cache_defs = {
-    '*/api/v2/mycontacts/user/*': 60*60*24*180,
+    '*/api/v2/mycontacts/user/*': 60 * 60 * 24 * 180,
     '*/api/v2/comments/*/photo/*': NEVER_EXPIRE,
     '*/api/v2/photo/*': NEVER_EXPIRE,
     '*/api/v2/video/*': NEVER_EXPIRE,
     '*/api/v3/auth/identify': DO_NOT_CACHE,
     '*/api/v2/me/info': DO_NOT_CACHE,
-    '*/api/v2/home/post/*': 30, # Post, comments and replies update cooldown
+    '*/api/v2/home/post/*': 30,  # Post and comments update cooldown
+    '*/api/v2/comments/*/replies': 30,  # Replies update cooldown
     '*/api/v2/home/allfeed': 10,
-    '*/api/v2/home/user/*/postsfeed': 5, # For accidental F5's
-    '*': 5, # Prevent accidential re-requests eg when loading same preview image from post and board view
+    '*/api/v2/home/user/*/postsfeed': 5,  # For accidental F5's
+    '*': 5,  # Prevent accidential re-requests eg when loading same preview image from post and board view
   }
 
   _ignores = (
@@ -509,12 +510,13 @@ class Mewe:
 
     return message
 
-  def prepare_feed(self, feed, users, retrieve_medias=False):
+  def prepare_feed(self, feed, users, retrieve_medias=False, with_message_only=False):
     '''Helper function to iterate over feed object and prepare rss-esque data set
     '''
     posts = []
 
     for post in feed:
+      # TODO: Filter out posts that contain no text, or contain only emojis
       msg = self.prepare_single_post(post, users, retrieve_medias=retrieve_medias)
       posts.append(msg)
 
