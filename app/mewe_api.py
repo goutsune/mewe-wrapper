@@ -129,6 +129,27 @@ class Mewe:
 
     return r.json()
 
+  def invoke_post(self, endpoint, **kwargs):
+    self.refresh_session()
+    r = self.session.post(endpoint, **kwargs)
+    if not r.ok:
+      if r.json().get('message', '') == 'Forbidden':
+        try:
+          # Silly retry code, we can do better, but not this time
+          print('Session died, attempting restart')
+          self.reload_session()
+
+          r = self.session.post(endpoint, **kwargs)
+          if not r.ok:
+            raise ValueError(f'Failed to invoke request after reload: {r.text}')
+
+        except Exception as e:
+          raise ValueError(f'Failed reload session: {e}')
+      else:
+        raise ValueError(f'Failed to invoke request: {r.text}')
+
+    return r.json()
+
   def session_ok(self):
     '''Checks if current session is still usable (e.g. no logout occurred due to API abuse or refresh token
     expiry.
@@ -307,6 +328,29 @@ class Mewe:
     users = {user['id']: user for user in response['users']}
 
     return medias, users
+
+  # ################### Data posting helpers
+
+  def make_post(self, text, everyone=False, friends_only=False, medias=None):
+    endpoint = f'{self.base}/v2/home/post'
+
+    payload = {
+      'text': text,
+      'everyone': everyone,
+      'closeFriends': friends_only,
+    }
+
+    return self.invoke_post(endpoint, json=payload)
+
+  def post_comment(self, post_id, text, medias=None):
+    endpoint = f'{self.base}/v2/home/post/{post_id}/comments'
+
+    return self.invoke_post(endpoint, json={'text': text})
+
+  def post_reply(self, comment_id, text, medias=None):
+    endpoint = f'{self.base}/v2/comments/{comment_id}/reply'
+
+    return self.invoke_post(endpoint, json={'text': text})
 
   # ################### Formatting helpers
 

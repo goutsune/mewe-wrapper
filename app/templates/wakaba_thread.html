@@ -11,7 +11,7 @@
      <a class="posterlink" href="/userfeed/{{post.author_id}}">▶</a>
      {{post.date}}
     </label>
-    <span class="reflink"><a href="javascript:insert({{post.id}})">№{{post.id}}</a></span>
+    <span class="reflink"><a href="javascript:insert(&#39;{{post.id}}&#39;)">№{{post.id[-8:]}}</a></span>
     <span class="postnum">#OP</span>
     {% if board_view %}[<a href="/viewpost/{{post.id}}" target="_blank">Ответ</a>]{% endif %}
   </div>
@@ -35,7 +35,7 @@ This post may have been deleted or the person that shared it may have changed it
          <a class="posterlink" href="/userfeed/{{post.author_id}}">▶</a>
          {{post.date}}
         </label>
-        <span class="reflink"><a href="javascript:insert({{post.id}})">№{{post.id}}</a></span>
+        <span class="reflink"><a>№{{post.id}}</a></span>
         <span class="postnum">#Q</span>
         [<a href="/viewpost/{{post.id}}" target="_blank">Ответ</a>]
         {{ post.text|safe }}

@@ -31,26 +31,53 @@ function set_cookie(name,value,days)
 	document.cookie=name+"="+value+expires+"; path=/";
 }
 
-function insert(text)
+function insert_c(text)
 {
-	var textarea=document.forms.postform.nya4;
+	var reply_to=document.forms.postform.reply_to;
+	var textarea=document.forms.postform.text;
 	if(textarea)
 	{
 		if(textarea.createTextRange && textarea.caretPos) // IE
 		{
 			var caretPos=textarea.caretPos;
-			caretPos.text=caretPos.text.charAt(caretPos.text.length-1)==" "?text+" ":text;
+			caretPos.text=caretPos.text.charAt(caretPos.text.length-1)==" "?">>"+text+" ":">>" + text;
 		}
 		else if(textarea.setSelectionRange) // Firefox
 		{
 			var start=textarea.selectionStart;
 			var end=textarea.selectionEnd;
-			textarea.value=textarea.value.substr(0,start)+text+textarea.value.substr(end);
+			textarea.value=textarea.value.substr(0,start)+">>"+text+"\n\n"+textarea.value.substr(end);
 			textarea.setSelectionRange(start+text.length,start+text.length);
 		}
 		else
 		{
-			textarea.value+=text+" ";
+			textarea.value+=">>"+text+" ";
+		}
+		//textarea.focus();
+	}
+	reply_to.value = text;
+}
+
+function insert(text)
+{
+	var textarea=document.forms.postform.text;
+	if(textarea)
+	{
+		if(textarea.createTextRange && textarea.caretPos) // IE
+		{
+			var caretPos=textarea.caretPos;
+			caretPos.text=caretPos.text.charAt(caretPos.text.length-1)==" "?">>"+text+" ":">>" + text;
+		}
+		else if(textarea.setSelectionRange) // Firefox
+		{
+			var start=textarea.selectionStart;
+			var end=textarea.selectionEnd;
+			textarea.value=textarea.value.substr(0,start)+">>"+text+"\n\n"+textarea.value.substr(end);
+			textarea.setSelectionRange(start+text.length,start+text.length);
+		}
+		else
+		{
+			textarea.value+=">>"+text+" ";
 		}
 		//textarea.focus();
 	}

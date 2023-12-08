@@ -6,25 +6,33 @@
 
 {% block content %}
   <div class="postarea">
-   <form id="postform" action="/post/" method="post" enctype="multipart/form-data">
+   <form id="postform" action="/reply" method="post" enctype="multipart/form-data">
     <table width="1%">
      <tbody>
       <tr>
         <td class="postblock">Получатель</td>
         <td>
-          <input type="text" name="nya3" size="35">
+          <input type="text" name="reply_to" size="35">
           <input type="submit" value="Отправить">
+          <input type="hidden" name="post_id" value="{{post.id}}">
         </td>
       </tr>
       <tr>
         <td class="postblock">Сообщение</td>
         <td>
-          <textarea name="nya4" cols="60" rows="6"></textarea>
+          <textarea name="text" cols="60" rows="6"></textarea>
         </td>
       </tr>
       <tr>
        <td class="postblock">Файл</td>
        <td><input type="file" name="file" size="35"></td>
+      </tr>
+      <tr>
+       <td class="postblock">Перейти к</td>
+       <td>
+        <label>[<input name="postredir" value="0" type="radio">доске ]</label>
+        [<label><input name="postredir" value="1" type="radio">треду ]</label>
+       </td>
       </tr>
      </tbody>
     </table>

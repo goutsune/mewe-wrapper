@@ -10,7 +10,11 @@
       <a class="posterlink" href="/userfeed/{{comment.user_id}}">▶</a>
       {{comment.date}}
      </label>
-     <span class="reflink"><a href="javascript:insert(&#39;&gt;&gt;{{comment.id}}&#39;)">№{{comment.id}}</a></span>
+     {% if reply_type == "R" %}
+     <span class="reflink"><a href="javascript:insert(&#39;{{comment.id}}&#39;)">№{{comment.id[-8:]}}</a></span>
+     {% else %}
+     <span class="reflink"><a href="javascript:insert_c(&#39;{{comment.id}}&#39;)">№{{comment.id[-8:]}}</a></span>
+     {% endif %}
      <span class="postnum">#{{ reply_type }}</span>
      <br>
      {% with content=comment, is_comment=True %}

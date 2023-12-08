@@ -1,5 +1,5 @@
 from datetime import datetime
-from flask import Flask, Response, render_template, request, abort
+from flask import Flask, Response, render_template, request, abort, redirect
 from requests.utils import quote
 from time import sleep
 
@@ -44,6 +44,66 @@ def show_post(post_id):
   users = {user['id']: user for user in result['users']}
   post_obj = c.prepare_single_post(result['post'], users, load_all_comments=True, retrieve_medias=True)
   return render_template('wakaba_viewthread.html', post=post_obj)
+
+
+@app.route('/reply', methods=('POST',))
+def post_reply():
+  # TODO: Process media
+  '''Processes form submitted from a thread and adds a comment or comment reply to the post'''
+
+  post_id = request.form['post_id']
+  reply_to = request.form.get('reply_to')
+  text = request.form['text']
+  postredir = int(request.form['postredir'])
+
+  try:
+    if reply_to:
+      c.post_reply(reply_to, text)
+
+    else:
+      c.post_comment(post_id, text)
+
+  except ValueError as e:
+    return str(e)
+
+  if postredir == 1:
+    return redirect(f'/viewpost/{post_id}')
+  else:
+    return redirect(f'/feed')
+
+
+@app.route('/newpost', methods=('POST',))
+def new_post():
+  # TODO: Process media
+  '''Processes form submitted from feed view and creates new post for the logged-in user'''
+
+  group = request.form['group']
+  text = request.form['text']
+  postredir = int(request.form['postredir'])
+  visibility = request.form['visibility']
+
+  try:
+      if visibility == 'all':
+        everyone = True
+        friends_only = False
+      elif visibility == 'friends':
+        everyone = False
+        friends_only = True
+      else:
+        everyone = False
+        friends_only = False
+
+      res = c.make_post(text, everyone, friends_only)
+
+  except ValueError as e:
+    return str(e)
+
+  post_id = res['post']['postItemId']
+
+  if postredir == 1:
+    return redirect(f'/viewpost/{post_id}')
+  else:
+    return redirect(f'/feed')
 
 
 @app.route('/feed/')

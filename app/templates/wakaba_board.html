@@ -6,18 +6,39 @@
 {% block content %}
   {% if can_post %}
   <div class="postarea">
-   <form id="postform" action="/post/" method="post" enctype="multipart/form-data">
+   <form id="postform" action="/newpost" method="post" enctype="multipart/form-data">
     <table width="1%">
      <tbody>
       <tr>
-        <td class="postblock">Сообщение</td>
+        <td class="postblock">Тема</td>
         <td>
-          <textarea name="nya4" cols="60" rows="6"></textarea>
+          <input name="group" size="35" list="albums"></input>
+          <datalist id="albums"></datalist>
+          <input type="submit" value="Отправить">
         </td>
+      </tr>
+      <tr>
+        <td class="postblock">Сообщение</td>
+        <td><textarea name="text" cols="60" rows="6"></textarea></td>
       </tr>
       <tr>
        <td class="postblock">Файл</td>
        <td><input type="file" name="file" size="35"></td>
+      </tr>
+      <tr>
+       <td class="postblock">Перейти к</td>
+       <td>
+        <label>[<input name="postredir" value="0" type="radio">доске ]</label>
+        [<label><input name="postredir" value="1" type="radio" checked>треду ]</label>
+       </td>
+      </tr>
+      <tr>
+       <td class="postblock">Видимость</td>
+       <td>
+        <label>[<input name="visibility" value="all" type="radio">все ]</label>
+        [<label><input name="visibility" value="subs" type="radio" checked>подписчики ]</label>
+        [<label><input name="visibility" value="friends" type="radio">друзья ]</label>
+       </td>
       </tr>
      </tbody>
     </table>
