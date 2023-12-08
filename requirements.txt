@@ -2,3 +2,4 @@ flask
 requests
 markdown
 mdx_linkify
+requests-cache

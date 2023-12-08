@@ -1,7 +1,10 @@
 import markdown
-from datetime import datetime
+import json
+from datetime import datetime, timedelta
 from http import cookiejar
+from os import path
 from requests import Session, get, post
+from requests_cache import CachedSession, DO_NOT_CACHE, NEVER_EXPIRE
 from requests.utils import quote
 from threading import Lock
 from urllib import parse as p
@@ -30,6 +33,22 @@ class Mewe:
     'image/gif': 'gif',
     'image/webp': 'webp',
   }
+  _cache_defs = {
+    '*/api/v2/mycontacts/user/*': 60*60*24*180,
+    '*/api/v2/comments/*/photo/*': NEVER_EXPIRE,
+    '*/api/v2/photo/*': NEVER_EXPIRE,
+    '*/api/v2/video/*': NEVER_EXPIRE,
+    '*/api/v3/auth/identify': DO_NOT_CACHE,
+    '*/api/v2/me/info': DO_NOT_CACHE,
+    '*/api/v2/home/post/*': 30, # Post, comments and replies update cooldown
+    '*/api/v2/home/allfeed': 10,
+    '*/api/v2/home/user/*/postsfeed': 5, # For accidental F5's
+    '*': 5, # Prevent accidential re-requests eg when loading same preview image from post and board view
+  }
+
+  _ignores = (
+    'access-token', 'cdn-exp', 'x-csrf-token', 'Cookie', 'trace-id', 'Via', 'X-Amz-Cf-Pop', 'X-Amz-Cf-Id'
+  )
 
   def __init__(self):
     '''Things to do:
@@ -42,7 +61,17 @@ class Mewe:
 
     cookie_jar = cookiejar.MozillaCookieJar(cookie_storage)
     cookie_jar.load(ignore_discard=True, ignore_expires=True)
-    session = Session()
+
+    session = CachedSession(
+      'session_cache',
+      backend='sqlite',
+      cache_control=False,
+      expire_after=timedelta(weeks=28),
+      ignored_parameters=self._ignores,
+      match_headers=True,
+      stale_if_error=True,
+      urls_expire_after=self._cache_defs,
+    )
 
     session.cookies = cookie_jar
     session.headers['user-agent'] = user_agent
@@ -565,8 +594,7 @@ def generate_emoji_dict():
     * Load all JSONs from CDN and compile that information into 'code': 'URL' substitution dict
     * Convert to class and provide dict-like object that dynamically handles emoji pack updates
     * Set up rudimentary caching in form of JSON dump with timestamp with periodical checks
-  '''
-  #return {}  # FIXME: Uncomment this after adding emoji cache, baka
+  ''
 
   _base = 'https://cdn.mewe.com'
   r = get(f'{_base}/emoji/build-info.json')
@@ -575,6 +603,8 @@ def generate_emoji_dict():
   # Build info contains information on used emoji packs and their locations
   print(f'Fetching build info')
   build_info = r.json()
+  with open(f'cache/build_info.json', 'w') as file:
+    file.write(r.text)
 
   # TODO: Use this to periodically check and rebuild emoji database
   mewe_version = build_info['version']
@@ -584,11 +614,19 @@ def generate_emoji_dict():
   # Now let's load content of each emoji pack
   pack_dict = {}
   for pack_name, url in packs.items():
-    print(f'Fetching {pack_name}')
-    r = get(f'{_base}{url}')
-    r.raise_for_status()
+    if path.exists(f'cache/emojis/{pack_name}.json'):
+      print(f'Using cached {pack_name}.json')
+      with open(f'cache/emojis/{pack_name}.json', 'r') as file:
+        pack_dict[pack_name] = json.load(file)
 
-    pack_dict[pack_name] = r.json()
+    else:
+      print(f'Fetching {pack_name}')
+      r = get(f'{_base}{url}')
+      r.raise_for_status()
+
+      pack_dict[pack_name] = r.json()
+      with open(f'cache/emojis/{pack_name}.json', 'w') as file:
+        file.write(r.text)
 
   # Finally let's pack all that into simple flat dictionary for lookup table
   emoji_dict = {}
