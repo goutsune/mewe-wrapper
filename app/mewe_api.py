@@ -36,13 +36,15 @@ class Mewe:
   _cache_defs = {
     '*/api/v2/mycontacts/user/*': 60 * 60 * 24 * 180,
     '*/api/v2/comments/*/photo/*': NEVER_EXPIRE,
+    '*/api/v2/photo/cm': DO_NOT_CACHE,
+    '*/api/v2/photo/pt': DO_NOT_CACHE,
     '*/api/v2/photo/*': NEVER_EXPIRE,
     '*/api/v2/video/*': NEVER_EXPIRE,
     '*/api/v3/auth/identify': DO_NOT_CACHE,
     '*/api/v2/me/info': DO_NOT_CACHE,
-    '*/api/v2/home/post/*': 30,  # Post and comments update cooldown
-    '*/api/v2/comments/*/replies': 30,  # Replies update cooldown
-    '*/api/v2/home/allfeed': 10,
+    '*/api/v2/home/post/*': 5,  # Post and comments update cooldown
+    '*/api/v2/comments/*/replies': 5,  # Replies update cooldown
+    '*/api/v2/home/allfeed': 5,
     '*/api/v2/home/user/*/postsfeed': 5,  # For accidental F5's
     '*': 5,  # Prevent accidential re-requests eg when loading same preview image from post and board view
   }
