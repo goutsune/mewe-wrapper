@@ -31,55 +31,67 @@ function set_cookie(name,value,days)
 	document.cookie=name+"="+value+expires+"; path=/";
 }
 
-function insert_c(text)
+function insert_c(comment_id, author_id)
 {
 	var reply_to=document.forms.postform.reply_to;
+	reply_to.value = comment_id;
 	var textarea=document.forms.postform.text;
+
 	if(textarea)
 	{
+		var mention = "@{{u_" + author_id + "}" + comment_id + "}";
 		if(textarea.createTextRange && textarea.caretPos) // IE
 		{
 			var caretPos=textarea.caretPos;
-			caretPos.text=caretPos.text.charAt(caretPos.text.length-1)==" "?">>"+text+" ":">>" + text;
+			caretPos.text = caretPos.text.charAt(caretPos.text.length-1) == " "? mention + "\n\n":mention;
 		}
 		else if(textarea.setSelectionRange) // Firefox
 		{
 			var start=textarea.selectionStart;
 			var end=textarea.selectionEnd;
-			textarea.value=textarea.value.substr(0,start)+">>"+text+"\n\n"+textarea.value.substr(end);
-			textarea.setSelectionRange(start+text.length,start+text.length);
+			textarea.value = textarea.value.substr(0,start) +	mention + "\n\n" + textarea.value.substr(end);
+			textarea.setSelectionRange(start+mention.length,start+mention.length);
 		}
 		else
 		{
-			textarea.value+=">>"+text+" ";
+			textarea.value += mention + "\n\n";
 		}
-		//textarea.focus();
+		textarea.focus();
 	}
-	reply_to.value = text;
 }
 
-function insert(text)
+function insert_r(parent_id, author_id, comment_id)
+{
+	insert_c(comment_id, author_id);
+	var reply_to=document.forms.postform.reply_to;
+	reply_to.value = parent_id;
+}
+
+function insert(post_id, author_id)
 {
 	var textarea=document.forms.postform.text;
+	var reply_to=document.forms.postform.reply_to;
+	reply_to.value = '';
 	if(textarea)
 	{
+		var mention = "@{{u_" + author_id + "}" + post_id + "}";
 		if(textarea.createTextRange && textarea.caretPos) // IE
 		{
 			var caretPos=textarea.caretPos;
-			caretPos.text=caretPos.text.charAt(caretPos.text.length-1)==" "?">>"+text+" ":">>" + text;
+			caretPos.text = caretPos.text.charAt(caretPos.text.length-1) == " "? mention + "\n\n":mention;
 		}
 		else if(textarea.setSelectionRange) // Firefox
 		{
 			var start=textarea.selectionStart;
 			var end=textarea.selectionEnd;
-			textarea.value=textarea.value.substr(0,start)+">>"+text+"\n\n"+textarea.value.substr(end);
-			textarea.setSelectionRange(start+text.length,start+text.length);
+			textarea.value = textarea.value.substr(0,start) +	mention + "\n\n" + textarea.value.substr(end);
+			textarea.setSelectionRange(start+mention.length,start+mention.length);
 		}
 		else
 		{
-			textarea.value+=">>"+text+" ";
+			textarea.value += mention + "\n\n";
 		}
-		//textarea.focus();
+		textarea.focus();
 	}
 }
 

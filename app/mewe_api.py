@@ -67,7 +67,6 @@ class Mewe:
       'session_cache',
       backend='sqlite',
       cache_control=False,
-      expire_after=timedelta(weeks=28),
       ignored_parameters=self._ignores,
       match_headers=True,
       stale_if_error=True,
@@ -357,7 +356,7 @@ class Mewe:
 
   def _prepare_photo(self, photo, thumb=False):
     if thumb:
-      photo_url = photo['_links']['img']['href'].format(imageSize='400x400', static=1)
+      photo_url = photo['_links']['img']['href'].format(imageSize='150x150', static=1)
     else:
       photo_url = photo['_links']['img']['href'].format(imageSize='2000x2000', static=0)
     quoted_url = quote(photo_url, safe='')
@@ -530,10 +529,10 @@ class Mewe:
     size = f'{photo["size"]["width"]}x{photo["size"]["height"]}'
     if photo.get('animated'):
       prepared_url = url_template.format(imageSize=size, static=0)
-      prepared_thumb = url_template.format(imageSize='400x400', static=1)
+      prepared_thumb = url_template.format(imageSize='150x150', static=1)
     else:
       prepared_url = url_template.format(imageSize=size)
-      prepared_thumb = url_template.format(imageSize='400x400')
+      prepared_thumb = url_template.format(imageSize='150x150')
 
     prepared = {
       'url': f'{hostname}/proxy?url={prepared_url}&mime={mime}&name={name}',
@@ -605,6 +604,13 @@ class Mewe:
       post['comments']['feed'] = response['feed']
 
     post_date = datetime.fromtimestamp(post['createdAt'])
+    if post.get('comments'):
+      missing_comment_count = post['comments']['total'] - len(post['comments']['feed'])
+      reply_count = sum((x.get('repliesCount', 0) for x in post['comments']['feed']))
+    else:
+      missing_comment_count = 0
+      reply_count = 0
+
     prepared_post = {
       'content': self.prepare_post_contents(post, users),
       # Message schema is a bit different for comments, so we can't just reuse prepare_post_contents
@@ -615,8 +621,7 @@ class Mewe:
 
       'comments': self.prepare_post_comments(post['comments']['feed'], users)
                   if post.get('comments') else [],
-      'missing_count': post['comments']['total'] - len(post['comments']['feed'])
-                       if post.get('comments') else 0,
+      'missing_count': missing_comment_count + reply_count,
 
       # Extra meta for RSS
       'categories': [x for x in post.get('hashTags', [])],

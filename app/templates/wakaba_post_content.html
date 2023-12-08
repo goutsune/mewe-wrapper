@@ -8,9 +8,9 @@
  {% for image in content.images %}
  <a target="_blank" href="{{image.url}}" class="imglink" title="{{image.name}} - ({{image.mime}}, {{image.size}})">
    {% if image.thumb_vertical %}
-   <img src="{{image.thumb}}" width="auto" height="200" alt="{{image.name}}" class="thumb">
+   <img src="{{image.thumb}}" width="auto" height="150" alt="{{image.name}}" class="thumb">
    {% else %}
-   <img src="{{image.thumb}}" width="200" height="auto" alt="{{image.name}}" class="thumb">
+   <img src="{{image.thumb}}" width="150" height="auto" alt="{{image.name}}" class="thumb">
    {% endif %}
  </a>
  {% endfor %}
@@ -25,9 +25,9 @@
  {% for video in content.videos %}
  <a target="_blank" href="{{video.url}}" class="imglink" title="{{video.name}} - (video/mp4, {{video.size}}), {{video.duration}}s">
    {% if video.thumb_vertical %}
-   <img src="{{video.thumb|safe}}" width="auto" height="200" alt="{{video.name}}" class="thumb">
+   <img src="{{video.thumb|safe}}" width="auto" height="150" alt="{{video.name}}" class="thumb">
    {% else %}
-   <img src="{{video.thumb|safe}}" width="200" height="auto" alt="{{video.name}}" class="thumb">
+   <img src="{{video.thumb|safe}}" width="150" height="auto" alt="{{video.name}}" class="thumb">
    {% endif %}
  </a>
  {% endfor %}
@@ -48,7 +48,7 @@
   {% if content.link.thumb %}
   <div class="image-container">
     <a class="imglink" target="_blank" href="{{ content.link.url|safe }}" title="{{content.link.text}}">
-      <img src="{{ content.link.thumb|safe }}" width="200" height="auto" alt="{{ content.link.title }}" class="thumb">
+      <img src="{{ content.link.thumb|safe }}" width="150" height="auto" alt="{{ content.link.title }}" class="thumb">
     </a>
   </div>
   {% else %}

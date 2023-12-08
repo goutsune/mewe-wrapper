@@ -11,9 +11,9 @@
       {{comment.date}}
      </label>
      {% if reply_type == "R" %}
-     <span class="reflink"><a href="javascript:insert(&#39;{{comment.id}}&#39;)">№{{comment.id[-8:]}}</a></span>
+     <span class="reflink"><a href="javascript:insert_r(&#39;{{parent.id}}&#39;, &#39;{{comment.user_id}}&#39;, &#39;{{comment.id}}&#39;)">№{{comment.id[-8:]}}</a></span>
      {% else %}
-     <span class="reflink"><a href="javascript:insert_c(&#39;{{comment.id}}&#39;)">№{{comment.id[-8:]}}</a></span>
+     <span class="reflink"><a href="javascript:insert_c(&#39;{{comment.id}}&#39;, &#39;{{comment.user_id}}&#39;)">№{{comment.id[-8:]}}</a></span>
      {% endif %}
      <span class="postnum">#{{ reply_type }}</span>
      <br>
