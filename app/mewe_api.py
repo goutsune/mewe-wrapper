@@ -598,7 +598,7 @@ def generate_emoji_dict():
     * Load all JSONs from CDN and compile that information into 'code': 'URL' substitution dict
     * Convert to class and provide dict-like object that dynamically handles emoji pack updates
     * Set up rudimentary caching in form of JSON dump with timestamp with periodical checks
-  ''
+  '''
 
   _base = 'https://cdn.mewe.com'
   r = get(f'{_base}/emoji/build-info.json')
