@@ -11,6 +11,7 @@ from urllib import parse as p
 
 from config import cookie_storage, user_agent, hostname
 from markdown_tools import MeweEmojiExtension, MeweMentionExtension
+from utils import prepare_photo_url, prepare_comment_photo
 
 
 class Mewe:
@@ -149,8 +150,10 @@ class Mewe:
           raise ValueError(f'Failed reload session: {e}')
       else:
         raise ValueError(f'Failed to invoke request: {r.text}')
-
-    return r.json()
+    try:
+      return r.json()
+    except Exception as e:
+      return r.text
 
   def session_ok(self):
     '''Checks if current session is still usable (e.g. no logout occurred due to API abuse or refresh token
@@ -331,6 +334,36 @@ class Mewe:
 
     return medias, users
 
+  def get_media_feed(self, limit=30, order=0):
+    '''Retrieves media object feed
+    '''
+    endpoint = f'{self.base}/v2/home/mediastream'
+    payload = {
+      'limit': limit,
+      'order': order}
+
+    return self.invoke_get(endpoint, payload)
+
+  def get_notifications(self, limit=30):
+    '''Retreives notification feed for recent mentions, replies etc'''
+    endpoint = f'{self.base}/v2/notifications/feed'
+    payload = {'maxResults': limit}
+
+    return self.invoke_get(endpoint, payload)
+
+  def mark_as_seen(self, notify_id=None, mark_all=None):
+    '''Marks a single notification or all of them as seen'''
+    endpoint = f'{self.base}/v2/notifications/markVisited'
+
+    if notify_id is not None:
+      payload = {'notificationId': notify_id}
+    elif mark_all is not None:
+      payload = {'all': True}
+    else:
+      raise ValueError('Either notify_id of mark_all needs to be set!')
+
+    return self.invoke_post(endpoint, data=payload)
+
   # ################### Data posting helpers
 
   def make_post(self, text, everyone=False, friends_only=False, media=None):
@@ -355,7 +388,7 @@ class Mewe:
       if 'image' in media['type']:
         comment_type = 'photo'
       else:
-        # FIXME: check how other media types are uploaded
+        # TODO: check how other media types are uploaded
         raise ProgrammingError('HOW DO I NONIMAGES')
       payload = {
         'text': text,
@@ -398,17 +431,7 @@ class Mewe:
 
   # ################### Formatting helpers
 
-  def _prepare_photo(self, photo, thumb=False):
-    if thumb:
-      photo_url = photo['_links']['img']['href'].format(imageSize='150x150', static=1)
-    else:
-      photo_url = photo['_links']['img']['href'].format(imageSize='2000x2000', static=0)
-    quoted_url = quote(photo_url, safe='')
-    mime = photo['mime']
-    name = photo['id']
 
-    url = f'{hostname}/proxy?url={quoted_url}&mime={mime}&name={name}'
-    return url
 
   def _prepare_video(self, video):
     video_url = video['_links']['linkTemplate']['href'].format(resolution='original')
@@ -491,7 +514,7 @@ class Mewe:
           media_photo_size = media['photo']['size']
 
           video_dict = {
-            'thumb': self._prepare_photo(media['photo']),
+            'thumb': prepare_photo_url(media['photo']),
             'url': prepared_url,
             'name': prepared_name,
             'width': min(media['photo']['size']['width'], 640),
@@ -505,8 +528,8 @@ class Mewe:
         # Image with no *known* associated media object
         elif photo := media.get('photo'):
           image_dict = {
-            'url': self._prepare_photo(photo),
-            'thumb': self._prepare_photo(photo, thumb=True),
+            'url': prepare_photo_url(photo),
+            'thumb': prepare_photo_url(photo, thumb=True),
             'thumb_vertical': True if photo["size"]["width"] < photo["size"]["height"] else False,
             'id': photo['id'],
             'mime': photo['mime'],
@@ -565,31 +588,6 @@ class Mewe:
 
     return posts, users
 
-  def _prepare_comment_photo(self, photo):
-    url_template = photo['_links']['img']['href']
-    mime = photo['mime']
-    name = photo['name']
-
-    size = f'{photo["size"]["width"]}x{photo["size"]["height"]}'
-    if photo.get('animated'):
-      prepared_url = url_template.format(imageSize=size, static=0)
-      prepared_thumb = url_template.format(imageSize='150x150', static=1)
-    else:
-      prepared_url = url_template.format(imageSize=size)
-      prepared_thumb = url_template.format(imageSize='150x150')
-
-    prepared = {
-      'url': f'{hostname}/proxy?url={prepared_url}&mime={mime}&name={name}',
-      'thumb': f'{hostname}/proxy?url={prepared_thumb}&mime={mime}&name={name}',
-      'thumb_vertical': True if photo['size']['width'] < photo['size']['height'] else False,
-      'id': photo['id'],
-      'name': name,
-      'size': size,
-      'mime': mime,
-    }
-
-    return prepared
-
   def prepare_post_comments(self, comments_feed, users):
     '''Prepares nested list of comment message objects in a manner similar to prepare_post_contents
     '''
@@ -611,7 +609,7 @@ class Mewe:
         comment['user'] = users[raw_comment['userId']]['name']
 
       if photo_obj := raw_comment.get('photo'):
-        comment['images'].append(self._prepare_comment_photo(photo_obj))
+        comment['images'].append(prepare_comment_photo(photo_obj))
 
       if link_obj := raw_comment.get('link'):
         comment['link'] = self._prepare_link(link_obj)

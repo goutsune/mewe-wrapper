@@ -1,80 +1,59 @@
 {% extends 'wakaba_base.html' %}
 
 {% block title %}MeWeちゃん — Главная{% endblock %}
-{% block logo_title %}MeWeちゃん{% endblock %}
+{% block logo_title %}{% endblock %}
 
 {% block content%}
-  <div class="featurecntnr">
-    <div class="greeting">
-      <img alt="" src="/n/23-03-08-1675420534936.png" width="650" height="867" />
-      <p>Изображение из <a href="/b/res/5227175.html">треда</a> в <a href="/b/">/b/</a></p>
-    </div>
-    <div class="greeting">
-      <img alt="" src="/n/23-03-08-1678053874707.jpg" width="649" height="482" />
-      <p> Изображение из <a href="/b/res/5273650.html">треда</a> в <a href="/b/">/b/</a></p>
-    </div>
-    <div class="greeting">
-      <img alt="" src="/n/23-03-08-1673783354802.jpg" width="650" height="635" />
-      <p> Изображение из <a href="/o/res/28501.html">треда</a> в <a href="/o/">/o/</a></p>
-    </div>
-  </div>
-
   <div class="mainpagecntnr">
     <div class="newscntnr">
-      <div class="news">Последние посты с текстом</div>
-      <!--thread-->
-      <br clear="left" />
-      <hr />
-      <div id="post_id">
-        <a name="82" />
-        <span class="filetitle" />
-        <span class="postername">
-          <span class="adminname">Красный пользователь</span>
-        </span>
-        Дата
-        <blockquote>Текст</blockquote>
+      <div class="news">Оповещения</div>
+      <div class="newscont">
+        {% for notice in notifies %}
+        <!--thread-->
+        <div id="post_id">
+          <span class="filetitle" />
+          {{notice.date}}
+          {% if notice.new %}<sup class="new_n">NEW</sup>{% endif %}
+          {% if notice.post_url %}
+            {% if notice.comment_id %}
+            <a href="{{notice.post_url}}{% if notice.new %}?markread={{ notice.notify_id }}{% endif%}#reply{{notice.comment_id}}" target="_blank">[&gt;&gt;]</a>
+            {% else %}
+            <a href="{{notice.post_url}}{% if notice.new %}?markread={{ notice.notify_id }}{% endif%}" target="_blank">[&gt;&gt;]</a>
+            {% endif %}
+          {% endif %}
+          <br/>
+          <span class="postername">{{notice.headline}}</span>
+          <blockquote>{{notice.message}}</blockquote>
+        </div>
+        <hr />
+        {% endfor %}
+        <br clear="all" />
       </div>
-      <!--thread-->
-      <br clear="left" />
-      <hr />
-      <div id="post_id">
-        <a name="82" />
-        <span class="filetitle" />
-        <span class="postername">Пользователь</span>
-        Дата
-        <blockquote>Текст</blockquote>
-      </div>
-
-      <hr />
-      <br clear="all" />
     </div>
 
     <div class="mainpagelinks">
       <div class="mnpglnkcolumn">
-        <div class="header">Колонка</div>
+        <div class="header">Последние активные в ленте</div>
         <ul>
-          <li><a href="#" title="Example link">Ссылка на что-нибудь</a></li>
-          <li><a href="#" title="Example link">Ссылка на что-нибудь</a></li>
-          <li><a href="#" title="Example link">Ссылка на что-нибудь</a></li>
-          <li><a href="#" title="Example link">Ссылка на что-нибудь</a></li>
-          <li><a href="#" title="Example link">Ссылка на что-нибудь</a></li>
-          <li><a href="#" title="Example link">Ссылка на что-нибудь</a></li>
-          <li><a href="#" title="Example link">Ссылка на что-нибудь</a></li>
-          <li><a href="#" title="Example link">Ссылка на что-нибудь</a></li>
+          {% for activity in last_active.values() %}
+          <li>
+            <a href="/userfeed/{{activity.user_id}}">{{activity.name}}</a>
+            ■
+            <a href="/viewpost/{{activity.last_post}}">{{activity.date}}</a>
+          </li>
+          {% endfor %}
         </ul>
       </div>
-      <div class="mnpglnkcolumn">
-        <div class="header">Колонка</div>
-        <ul>
-          <li><a href="#" title="Example link">Ссылка на что-нибудь</a></li>
-          <li><a href="#" title="Example link">Ссылка на что-нибудь</a></li>
-          <li><a href="#" title="Example link">Ссылка на что-нибудь</a></li>
-          <li><a href="#" title="Example link">Ссылка на что-нибудь</a></li>
-          <li><a href="#" title="Example link">Ссылка на что-нибудь</a></li>
-          <li><a href="#" title="Example link">Ссылка на что-нибудь</a></li>
-          <li><a href="#" title="Example link">Ссылка на что-нибудь</a></li>
-          <li><a href="#" title="Example link">Ссылка на что-нибудь</a></li>
-        </ul>
     </div>
+  </div>
+  <div class="news">Последние медиа</div>
+  <div class="featurecntnr">
+    {% for image in medias %}
+    <div class="greeting">
+      <a href="{{image.post_url}}" target="_blank">
+        <img class="gallery_img" title="{{image.date}}" src="{{image.url}}" />
+      </a>
+    </div>
+    {% endfor %}
   </div>
 {% endblock %}

@@ -28,6 +28,10 @@ form .trap { display:none }
 	max-height: 1em;
 }
 
+.new_n {
+	color: red;
+}
+
 .catthread {
 	vertical-align: top;
 	word-wrap: break-word;
@@ -84,13 +88,12 @@ position: relative;
 
 .mainpagecntnr {
         text-align: center;
-        border-bottom: 1px solid !important;
         padding-bottom: 4px;
     }
 
 .mainpagelinks , .newscntnr {
         display: inline-block;
-        max-width: 45%;
+        max-width: 48%;
         vertical-align: top;
         position: relative;
         overflow: hidden;
@@ -99,6 +102,7 @@ position: relative;
 
 .featurecntnr {
       text-align: center;
+      border-bottom: 1px solid !important;
 }
 
 .greeting {
@@ -115,8 +119,18 @@ position: relative;
     }
 
 .newscntnr {
-        text-align: left;
-    }
+	text-align: left;
+	max-height: 40em;
+ }
+
+.newscont {
+	padding-left: 2px;
+	padding-right: 2px;
+	text-align: left;
+	max-height: 30em;
+	overflow-y: scroll;
+	scrollbar-width: none;
+}
 
 .newscntnr table {
         text-align: center;
@@ -139,11 +153,11 @@ position: relative;
 }
 
 .mnpglnkcolumn {
-    text-align: left;
+    text-align: right;
     display: inline-block;
     float: none;
     vertical-align: top;
-    width:17em;
+    width:auto;
 }
 
 .navbar {

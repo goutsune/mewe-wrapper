@@ -5,6 +5,7 @@ from time import sleep
 
 from config import host, port, hostname
 from mewe_api import Mewe
+from utils import prepare_media_feed, prepare_notifications, gather_post_activity
 
 # ###################### Init
 app = Flask(__name__)
@@ -31,10 +32,16 @@ def make_index():
   # FIXME: Finish main page display someday, lol
   '''Generates index page with latest medias and posts.
   Also shows user list and group list'''
-  medias = c.prepare_media_feed(limit=10)
-  posts = c.prepare_feed(limit=10, with_message=True)
+  raw_medias = c.get_media_feed(limit=24)
+  medias = prepare_media_feed(raw_medias)
 
-  return render_template('wakaba_index.html', medias=medias, posts=posts, last_active=last_active)
+  raw_notifies = c.get_notifications()
+  notifies = prepare_notifications(raw_notifies)
+
+  posts, users = c.get_feed(limit=50)
+  last_active = gather_post_activity(posts, users)
+
+  return render_template('wakaba_index.html', medias=medias, notifies=notifies, last_active=last_active)
 
 
 @app.route('/viewpost/<string:post_id>')
@@ -44,12 +51,16 @@ def show_post(post_id):
   result = c.get_post(post_id)
   users = {user['id']: user for user in result['users']}
   post_obj = c.prepare_single_post(result['post'], users, load_all_comments=True, retrieve_medias=True)
+
+  markread = request.args.get('markread', None)
+  if markread is not None:
+    c.mark_as_seen(notify_id=markread)
+
   return render_template('wakaba_viewthread.html', post=post_obj)
 
 
 @app.route('/reply', methods=('POST',))
 def post_reply():
-  # TODO: Process media
   '''Processes form submitted from a thread and adds a comment or comment reply to the post'''
 
   post_id = request.form['post_id']
@@ -79,7 +90,6 @@ def post_reply():
 
 @app.route('/newpost', methods=('POST',))
 def new_post():
-  # TODO: Process media
   '''Processes form submitted from feed view and creates new post for the logged-in user'''
 
   group = request.form['group']
