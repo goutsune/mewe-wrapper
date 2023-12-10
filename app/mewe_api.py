@@ -36,7 +36,7 @@ class Mewe:
   }
   _cache_defs = {
     '*/api/v2/mycontacts/user/*': 60 * 60 * 24 * 180,
-    '*/api/v2/comments/*/photo/*': NEVER_EXPIRE,
+    '*/api/v2/comments/*/photo/*': 60 * 60 * 24 * 30,
     '*/api/v2/photo/cm': DO_NOT_CACHE,
     '*/api/v2/photo/pt': DO_NOT_CACHE,
     '*/api/v2/photo/*': NEVER_EXPIRE,
@@ -230,7 +230,10 @@ class Mewe:
   def resolve_user(user_id, user_list):
     '''Formats username by combining full name with invite identifier
     '''
-    return f"{user_list[user_id]['name']} ({user_list[user_id]['contactInviteId']})"
+    try:
+      return f"{user_list[user_id]['name']} ({user_list[user_id]['contactInviteId']})"
+    except KeyError:
+      return user_id
 
   def get_user_info(self, user_id):
     '''Invokes mycontacts/user/{user_id} method to fetch information about a user by their ID, contacts only.

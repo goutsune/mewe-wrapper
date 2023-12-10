@@ -144,7 +144,7 @@ def gather_post_activity(posts, users):
       headline[item['userId']] = {
         'name': users[item['userId']]['name'],
         'user_id': item['userId'],
-        'date': datetime.fromtimestamp(item['createdAt'], tz=timezone.utc)
+        'date': datetime.fromtimestamp(item['createdAt'])
                         .strftime(r'%d %b %Y %H:%M:%S'),
         'last_post': item['postItemId'],
       }
