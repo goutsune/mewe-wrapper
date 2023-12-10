@@ -29,10 +29,9 @@ def cleanup():
 # ###################### App routes
 @app.route('/')
 def make_index():
-  # FIXME: Finish main page display someday, lol
   '''Generates index page with latest medias and posts.
   Also shows user list and group list'''
-  raw_medias = c.get_media_feed(limit=24)
+  raw_medias = c.get_media_feed(limit=100)
   medias = prepare_media_feed(raw_medias)
 
   raw_notifies = c.get_notifications()

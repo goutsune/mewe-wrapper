@@ -101,22 +101,27 @@ position: relative;
 	}
 
 .featurecntnr {
-      text-align: center;
-      border-bottom: 1px solid !important;
+	text-align: center;
+	border-bottom: 1px solid !important;
+	display: grid;
+	grid-template-columns: repeat(4, auto);
+	grid-template-rows: repeat(8, auto);
+	grid-gap: 15px;
 }
 
 .greeting {
-    text-align: center;
-    display: inline-block;
-    max-width: 20%;
-    font-size: 0.8em;
+	text-align: center;
+	display: inline-block;
+	font-size: 0.8em;
 }
 
 .greeting img {
-        max-width: 100%;
-        max-height: unset;
-        height: auto;
-    }
+	width: 200px;
+	height: 200px;
+	object-fit: cover;
+  -o-object-fit:cover;
+  overflow: hidden;
+}
 
 .newscntnr {
 	text-align: left;
