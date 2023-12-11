@@ -369,7 +369,7 @@ class Mewe:
 
   # ################### Data posting helpers
 
-  def make_post(self, text, everyone=False, friends_only=False, media=None):
+  def make_post(self, text, everyone=False, friends_only=False, medias=None):
     endpoint = f'{self.base}/v2/home/post'
 
     payload = {
@@ -377,9 +377,9 @@ class Mewe:
       'everyone': everyone,
       'closeFriends': friends_only,
     }
-    if media is not None:
-      if 'image' in media['type']:
-        payload['imageIds'] = [media['id']]
+    if medias is not None:
+      if all(['image' in x['type'] for x in medias]):
+        payload['imageIds'] = [x['id'] for x in medias]
       else:
         # FIXME: check how other media types are uploaded
         raise ProgrammingError('HOW DO I NONIMAGES')

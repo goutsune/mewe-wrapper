@@ -95,10 +95,11 @@ def new_post():
   text = request.form['text']
   postredir = int(request.form['postredir'])
   visibility = request.form['visibility']
+
   if 'file' in request.files and request.files['file'].filename:
-    media = c.upload_photo(request.files['file'])
+    medias = [c.upload_photo(x) for x in request.files.getlist('file')]
   else:
-    media = None
+    medias = None
 
   try:
       if visibility == 'all':
@@ -111,7 +112,7 @@ def new_post():
         everyone = False
         friends_only = False
 
-      res = c.make_post(text, everyone, friends_only, media)
+      res = c.make_post(text, everyone, friends_only, medias)
 
   except ValueError as e:
     return str(e)
