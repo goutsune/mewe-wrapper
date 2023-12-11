@@ -114,6 +114,15 @@ def prepare_notifications(notification_feed):
         'post_url': False,
         'comment_id': False})
 
+    elif kind == 'new_follow_request':
+      who = item['actingUsers'][0]['name']
+
+      notice.update({
+        'headline': f'{who} wants to follow you!',
+        'message': '',
+        'post_url': False,
+        'comment_id': False})
+
     elif kind == 'poll_ended':
       who = item['actingUsers'][0]['name']  # The first user in this list seems to be the one who reacted
 
