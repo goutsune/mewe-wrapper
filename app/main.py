@@ -121,7 +121,7 @@ def new_post():
   if postredir == 1:
     return redirect(f'/viewpost/{post_id}')
   else:
-    return redirect(f'/feed')
+    return redirect(f'/feed/')
 
 
 @app.route('/feed/')
