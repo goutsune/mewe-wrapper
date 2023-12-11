@@ -1,6 +1,7 @@
 body { margin: 0; padding: 8px; margin-bottom: auto; }
 div.post { margin: 12px 40px; }
 div.repost { display: flow-root; border: 1px dotted black; padding: 8px }
+code {font-family: monospace; }
 
 form { margin-bottom: 0px }
 form .trap { display:none }
@@ -9,6 +10,7 @@ form .trap { display:none }
 .postarea table { margin: 0px auto; text-align: left }
 .thumb { border: none; float: left; margin: 2px 20px }
 .nothumb { float: left; background: #eee; border: 2px dashed #aaa; text-align: center; margin: 2px 20px; padding: 3em 2em; }
+.thidden { display: none; }
 .reflink a { color: inherit; text-decoration: none }
 .reply .filesize { margin-left: 20px }
 .userdelete { float: right; text-align: center; white-space: nowrap }
@@ -21,6 +23,19 @@ form .trap { display:none }
 .imglink {
 	/*float:left;*/
 	/* margin:2px 20px; */
+}
+
+.imgbuttons {
+	float: left;
+	margin-right: -40px;
+}
+
+.imgselect {
+	cursor: grabbing;
+}
+
+.sactive {
+	color: red;
 }
 
 .emojis {

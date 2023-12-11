@@ -1,13 +1,3 @@
-function form_subject(form, num, subject, admin, taskwas, pagewas) {
-	var span = document.getElementById('subj' + num);
-	var text = '<form method="post" action="' + form + '">' +
-	'<input type="hidden" name="admin" value="' + admin + '" />' +
-	'<input type="hidden" name="taskwas" value="' + taskwas + '" /><input type="hidden" name="pagewas" value="' + pagewas + '" />' +
-	'<input type="hidden" name="mtask" value="subject" /><input type="hidden" name="num" value="' + num + '" />' +
-	'<input type="text" name="subject" value="' + subject + '" /><input type="submit" value="S" /></form>';
-	span.innerHTML = text;
-}
-
 function get_cookie(name)
 {
 	with(document.cookie)
@@ -112,6 +102,22 @@ function highlight(post)
 	return true;
 }
 
+function set_visible_image(obj, item_num){
+	var container = obj.parentNode.parentNode.querySelector(".imgs");
+	var buttons = obj.parentNode;
+
+	buttons.querySelectorAll(".imgselect").forEach(function(x) {
+		x.classList.remove("sactive");
+	});
+
+	obj.classList.add("sactive");
+	var new_img = container.getElementsByClassName("imglink")[item_num];
+	var old_img = container.querySelector("a:not(.thidden)");
+	if (new_img !== old_img) {
+		old_img.classList.add('thidden');
+		new_img.classList.remove('thidden');
+	}
+}
 
 function set_stylesheet_frame(styletitle,framename)
 {
