@@ -485,6 +485,17 @@ class Mewe:
 
     return prepared_poll
 
+  def prepare_emojis(self, emoji_dict):
+    emojis = []
+
+    for code, count in emoji_dict['counts'].items():
+      emojis.append({
+        'code': code,
+        'url': self.emojis[code],
+        'count': count
+      })
+    return emojis
+
   def prepare_post_contents(self, post, user_list):
     '''Reserializes MeWe post object for more convenient use with template output.
     '''
@@ -604,6 +615,9 @@ class Mewe:
         'date': comment_date.strftime(r'%d %b %Y %H:%M:%S'),
         'timestamp': raw_comment['createdAt'],
         'images': [],
+        'reply_count': raw_comment.get('repliesCount', 0),
+        'subscribed': raw_comment['follows'],
+        'emojis': self.prepare_emojis(raw_comment['emojis']) if raw_comment.get('emojis') else None,
       }
 
       if owner := raw_comment.get('owner'):
@@ -667,6 +681,8 @@ class Mewe:
       'comments': self.prepare_post_comments(post['comments']['feed'], users)
                   if post.get('comments') else [],
       'missing_count': missing_comment_count + reply_count,
+      'subscribed': post['follows'],
+      'emojis': self.prepare_emojis(post['emojis']) if post.get('emojis') else None,
 
       # Extra meta for RSS
       'categories': [x for x in post.get('hashTags', [])],

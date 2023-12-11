@@ -23,9 +23,22 @@ form .trap { display:none }
 	/* margin:2px 20px; */
 }
 
+.emojis {
+	vertical-align: 1px;
+}
+
 .mewe-emoji {
 	display: inline;
 	max-height: 1em;
+	vertical-align: -2px;
+}
+
+.replycount {
+	margin-right: 4px;
+}
+
+.postflags {
+	color: #c16f7e;
 }
 
 .new_n {

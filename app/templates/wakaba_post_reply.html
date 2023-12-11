@@ -8,19 +8,33 @@
       <span class="replytitle"></span>
       <span class="commentpostername">{{comment.user}}</span>
       <a class="posterlink" href="/userfeed/{{comment.user_id}}">▶</a>
+      <span class="postflags">{% if comment.subscribed %}✿{% endif %}</span>
       {{comment.date}}
-     </label>
+
      {% if reply_type == "R" %}
      <span class="reflink"><a href="javascript:insert_r(&#39;{{parent.id}}&#39;, &#39;{{comment.user_id}}&#39;, &#39;{{comment.id}}&#39;)">№{{comment.id[-8:]}}</a></span>
      {% else %}
      <span class="reflink"><a href="javascript:insert_c(&#39;{{comment.id}}&#39;, &#39;{{comment.user_id}}&#39;)">№{{comment.id[-8:]}}</a></span>
      {% endif %}
+     {% if comment.emojis %}<span class="emojis">
+       [{% for emoji in comment.emojis %}
+         <img class="mewe-emoji" src="{{ emoji.url }}" alt="{{ emoji.code }}"> {{ emoji.count }}
+         {% if not loop.last %}|{% endif %}
+       {% endfor %}]
+     </span>
+     {% endif %}
      <span class="postnum">#{{ reply_type }}</span>
+     {% if board_view and comment.reply_count %}
+      <span class="replycount">➫{{ comment.reply_count }}</span>
+     {% endif %}
+     </label>
      <br>
      {% with content=comment, is_comment=True %}
        {% include 'wakaba_post_content.html' %}
      {% endwith %}
-     <div class="post">{{comment.text|safe}}</div>
+     <div class="post">
+       {{comment.text|safe}}
+     </div>
     </td>
   </tr>
 </tbody></table>
