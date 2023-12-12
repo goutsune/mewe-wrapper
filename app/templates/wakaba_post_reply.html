@@ -3,6 +3,7 @@
     <td class="doubledash">&gt;&gt;</td>
     <td class="reply" id="reply{{comment.id}}">
      <a name="{{comment.id}}"></a>
+     <div class="postmeta">
      <label>
       <input type="checkbox" name="delete" value="{{comment.id}}">
       <span class="replytitle"></span>
@@ -28,6 +29,7 @@
       <span class="replycount">➫{{ comment.reply_count }}</span>
      {% endif %}
      </label>
+     </div>
      <br>
      {% with content=comment, is_comment=True %}
        {% include 'wakaba_post_content.html' %}

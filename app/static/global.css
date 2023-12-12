@@ -40,6 +40,21 @@ form .trap { display:none }
 
 .emojis {
 	vertical-align: 1px;
+	display: inline-block;
+}
+
+.postmeta {
+	display: inline;
+}
+
+.pmedialink {
+	max-width: 15em;
+	overflow-x: hidden;
+	display: inline-block;
+	text-overflow: "(…)";
+	-o-text-overflow: "(…)";
+	white-space: nowrap;
+	vertical-align: bottom;
 }
 
 .mewe-emoji {

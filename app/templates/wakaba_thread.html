@@ -4,7 +4,7 @@
     {% include 'wakaba_post_content.html' %}
   {% endwith %}
 
-  <div style="display: inline-block;">
+  <div class="postmeta oppost">
     <label>
      <span class="filetitle">{{post.content.album}}</span>
      <span class="postername">{{post.author}}</span>
@@ -21,8 +21,8 @@
     </span>
     {% endif %}
     <span class="postnum">#OP</span>
-    {% if board_view %}[<a href="/viewpost/{{post.id}}" target="_blank">Ответ</a>]{% endif %}
   </div>
+    {% if board_view %}[<a href="/viewpost/{{post.id}}" target="_blank">Ответ</a>]{% endif %}
   <div class="post">
     {{ post.content.text|safe }}
     {% if post.content.repost %}
@@ -33,25 +33,27 @@ This post may have been deleted or the person that shared it may have changed it
       </div>
       {% else %}
       <div class="repost">
-      {% with content=post.content.repost %}
-        {% include 'wakaba_post_content.html' %}
-      {% endwith %}
-      {% with post=post.content.repost %}
-        <label>
-         <span class="filetitle">{{post.album}}</span>
-         <span class="postername">{{post.author}}</span>
-         <a class="posterlink" href="/userfeed/{{post.author_id}}">▶</a>
-         {{post.date}}
-        </label>
-        <span class="reflink"><a>№{{post.id}}</a></span>
-        {% if post.emojis %}<span class="emojis">
-          [{% for emoji in post.emojis %}
-            <img class="mewe-emoji" src="{{ emoji.url }}" alt="{{ emoji.code }}"> {{ emoji.count }}
-            {% if not loop.last %}|{% endif %}
-          {% endfor %}]
-        </span>
-        {% endif %}
-        <span class="postnum">#Q</span>
+        {% with content=post.content.repost %}
+          {% include 'wakaba_post_content.html' %}
+        {% endwith %}
+        {% with post=post.content.repost %}
+        <div class="postmeta oppost">
+          <label>
+           <span class="filetitle">{{post.album}}</span>
+           <span class="postername">{{post.author}}</span>
+           <a class="posterlink" href="/userfeed/{{post.author_id}}">▶</a>
+           {{post.date}}
+          </label>
+          <span class="reflink"><a>№{{post.id}}</a></span>
+          {% if post.emojis %}<span class="emojis">
+            [{% for emoji in post.emojis %}
+              <img class="mewe-emoji" src="{{ emoji.url }}" alt="{{ emoji.code }}"> {{ emoji.count }}
+              {% if not loop.last %}|{% endif %}
+            {% endfor %}]
+          </span>
+          {% endif %}
+          <span class="postnum">#Q</span>
+        </div>
         [<a href="/viewpost/{{post.id}}" target="_blank">Ответ</a>]
         {{ post.text|safe }}
       {% endwith %}

@@ -1,6 +1,6 @@
 {%- if content.images %}
 <span class="filesize">
-  <a target="_blank" href="{{content.images[0].url}}">{{content.images[0].name}}</a> -
+  <a target="_blank" href="{{content.images[0].url}}" class="pmedialink" title="{{content.images[0].name}}">{{content.images[0].name}}</a> -
   (<em>{{content.images[0].mime}}, {{content.images[0].size}}</em>)
 </span>
 <br>
@@ -26,7 +26,7 @@
 </div>
 {% elif content.videos %}
 <span class="filesize">
-  <a target="_blank" href="{{content.videos[0].url|safe}}">{{content.videos[0].name}}</a> -
+  <a target="_blank" href="{{content.videos[0].url|safe}}" class="pmedialink" title="{{content.videos[0].name}}">{{content.videos[0].name}}</a> -
   (<em>video/mp4, {{content.videos[0].size}}, {{content.videos[0].duration}}s</em>)
 </span>
 <br>
@@ -43,14 +43,14 @@
 </div>
 {% elif content.files %}
 <span class="filesize">
-  <a target="_blank" href="{{content.files[0].url|safe}}">{{content.files[0].name}}</a> -
+  <a target="_blank" href="{{content.files[0].url|safe}}" class="pmedialink" title="{{content.files[0].name}}">{{content.files[0].name}}</a> -
   (<em>{{content.files[0].mime}}, {{content.files[0].size}} bytes</em>)
 </span>
 <br>
 <div class="nothumb">Нет<br>уменьшенной<br>копии.</div>
 {% elif content.link %}
 <span class="filesize">
-  <a target="_blank" href="{{ content.link.url|safe }}">{{ content.link.title }}</a> -
+  <a target="_blank" href="{{ content.link.url|safe }}" class="pmedialink" title="{{ content.link.title }}">{{ content.link.title }}</a> -
   (<em>link, {{ content.link.name }}</em>)
 </span>
 <br>
