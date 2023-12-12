@@ -5,6 +5,7 @@ from time import sleep
 
 from config import host, port, hostname
 from mewe_api import Mewe
+from mewe_cfg import MeweConfig
 from utils import prepare_media_feed, prepare_notifications, gather_post_activity
 
 # ###################### Init
@@ -25,6 +26,10 @@ def cleanup():
   print("Disconnecting...")
   c.refresh_session()
 
+@app.context_processor
+def inject_mewe_settings():
+    # Intentionally return uninitialized class, so only static variables are set
+    return { 'mewe_cfg': MeweConfig }
 
 # ###################### App routes
 @app.route('/')

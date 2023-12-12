@@ -161,8 +161,8 @@ def gather_post_activity(posts, users):
   return headline
 
 
-def prepare_photo_url(photo, thumb=False, thumb_size='150x150', img_size='2000x2000'):
-  # Known image sizes: 150, 400, 800, 1200, 2000
+def prepare_photo_url(photo, thumb=False, thumb_size='400x400', img_size='2000x2000'):
+  # Known image sizes: 50, 150, 400, 800, 1200, 2000
   if thumb:
     photo_url = photo['_links']['img']['href'].format(imageSize=thumb_size, static=1)
   else:

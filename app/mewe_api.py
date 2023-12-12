@@ -12,6 +12,7 @@ from urllib import parse as p
 from config import cookie_storage, user_agent, hostname
 from markdown_tools import MeweEmojiExtension, MeweMentionExtension
 from utils import prepare_photo_url, prepare_comment_photo
+from mewe_cfg import MeweConfig
 
 
 class Mewe:
@@ -106,6 +107,7 @@ class Mewe:
     self.markdown = markdown_instance.convert
 
     self.refresh_lock = Lock()
+    self.config = MeweConfig()
 
   def is_token_expired(self):
     access_token = self.session.cookies._cookies['.mewe.com']['/'].get('access-token')
@@ -528,7 +530,7 @@ class Mewe:
           media_photo_size = media['photo']['size']
 
           video_dict = {
-            'thumb': prepare_photo_url(media['photo']),
+            'thumb': prepare_photo_url(media['photo'], thumb=True, thumb_size=self.config.thumb_load_size),
             'url': prepared_url,
             'name': prepared_name,
             'width': min(media['photo']['size']['width'], 640),
@@ -543,7 +545,7 @@ class Mewe:
         elif photo := media.get('photo'):
           image_dict = {
             'url': prepare_photo_url(photo),
-            'thumb': prepare_photo_url(photo, thumb=True),
+            'thumb': prepare_photo_url(photo, thumb=True, thumb_size=self.config.thumb_load_size),
             'thumb_vertical': True if photo["size"]["width"] < photo["size"]["height"] else False,
             'id': photo['id'],
             'mime': photo['mime'],
@@ -626,7 +628,7 @@ class Mewe:
         comment['user'] = users[raw_comment['userId']]['name']
 
       if photo_obj := raw_comment.get('photo'):
-        comment['images'].append(prepare_comment_photo(photo_obj))
+        comment['images'].append(prepare_comment_photo(photo_obj, thumb_size=self.config.thumb_load_size))
 
       if link_obj := raw_comment.get('link'):
         comment['link'] = self._prepare_link(link_obj)
