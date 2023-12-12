@@ -206,7 +206,6 @@ def proxy_media():
   if not res.ok:
     return res.iter_content(), 500
 
-  content_length = res.headers['content-length']
   c.last_streamed_response = res
   return res.iter_content(chunk_size=1024), {
      'Content-Type': mime,
