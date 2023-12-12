@@ -34,7 +34,13 @@ class Mewe:
     'image/png': 'png',
     'image/gif': 'gif',
     'image/webp': 'webp',
+    'image/bmp': 'bmp',
+    'video/mp4': 'mp4',
+    'video/webm': 'webm',
   }
+
+  rev_mime = dict(map(reversed, mime_mapping.items()))
+
   _cache_defs = {
     '*/api/v2/mycontacts/user/*': 60 * 60 * 24 * 180,
     '*/api/v2/comments/*/photo/*': 60 * 60 * 24 * 30,
@@ -450,7 +456,6 @@ class Mewe:
     file_url = doc['_links']['url']['href']
     quoted_url = quote(file_url, safe='')
     name = doc['fileName']
-    mime = doc['mime']
 
     url = f'{hostname}/proxy?url={quoted_url}&mime={mime}&name={name}'
     return url, name
@@ -629,6 +634,21 @@ class Mewe:
 
       if photo_obj := raw_comment.get('photo'):
         comment['images'].append(prepare_comment_photo(photo_obj, thumb_size=self.config.thumb_load_size))
+
+      if document_obj := raw_comment.get('document'):
+        #FIXME: Either put this into separate document object inside comment, or revise comment schema
+        url = document_obj['_links']['url']['href']
+        thumb = document_obj['_links']['iconUrl']['href']
+        mime = self.rev_mime[document_obj['type']]
+        comment['images'].append({
+          'url': f'{hostname}/proxy?url={url}&mime={mime}&name={document_obj["name"]}',
+          'thumb': f'https://cdn.mewe.com/assets/icons/file-type/{document_obj["type"]}.png',
+          'thumb_vertical': False,
+          'id': document_obj['id'],
+          'name': document_obj['name'],
+          'size': f'{document_obj["size"]} bytes',
+          'mime': mime,
+        })
 
       if link_obj := raw_comment.get('link'):
         comment['link'] = self._prepare_link(link_obj)
