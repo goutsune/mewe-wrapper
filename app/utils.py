@@ -205,13 +205,12 @@ def prepare_comment_photo(photo, thumb_size='150x150', img_size='2000x2000'):
 # https://github.com/psf/requests/issues/3070#issuecomment-205070203
 class TimeoutHTTPAdapter(HTTPAdapter):
     def __init__(self, *args, **kwargs):
-        if "timeout" in kwargs:
-            self.timeout = kwargs["timeout"]
-            del kwargs["timeout"]
+        if 'timeout' in kwargs:
+            self.timeout = kwargs.pop('timeout')
         super().__init__(*args, **kwargs)
 
     def send(self, request, **kwargs):
-        timeout = kwargs.get("timeout")
+        timeout = kwargs.get('timeout')
         if timeout is None and hasattr(self, 'timeout'):
-            kwargs["timeout"] = self.timeout
+            kwargs['timeout'] = self.timeout
         return super().send(request, **kwargs)
