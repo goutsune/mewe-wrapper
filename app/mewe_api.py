@@ -461,6 +461,7 @@ class Mewe:
     file_url = doc['_links']['url']['href']
     quoted_url = quote(file_url, safe='')
     name = doc['fileName']
+    mime = doc['mime']
 
     url = f'{hostname}/proxy?url={quoted_url}&mime={mime}&name={name}'
     return url, name
