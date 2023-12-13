@@ -11,7 +11,7 @@ from urllib import parse as p
 
 from config import cookie_storage, user_agent, hostname, proxy
 from markdown_tools import MeweEmojiExtension, MeweMentionExtension
-from utils import prepare_photo_url, prepare_comment_photo
+from utils import prepare_photo_url, prepare_comment_photo, TimeoutHTTPAdapter
 from mewe_cfg import MeweConfig
 
 
@@ -85,6 +85,9 @@ class Mewe:
 
     session.cookies = cookie_jar
     session.headers['user-agent'] = user_agent
+    # Is this an adequate way to provide session timeout setup?
+    session.mount('http://', TimeoutHTTPAdapter(timeout=5))
+    session.mount('https://', TimeoutHTTPAdapter(timeout=5))
     if proxy is not None:
       session.proxies.update(proxy)
 
