@@ -3,6 +3,12 @@
   <a target="_blank" href="{{content.images[0].url}}" class="pmedialink" title="{{content.images[0].name}}">{{content.images[0].name}}</a> -
   (<em>{{content.images[0].mime}}, {{content.images[0].size}}</em>)
 </span>
+{%- if post.emojis and not is_comment %}<span class="emojis">
+  [{%- for emoji in post.emojis %}
+    <img class="mewe-emoji" src="{{ emoji.url }}" alt="{{ emoji.code }}"> {{ emoji.count }}{% if not loop.last %}|{% endif %}
+  {% endfor %}]
+</span>
+{% endif %}
 <br>
 <div class="image-container">
  {% if content.images|length > 1 %}
@@ -29,6 +35,13 @@
   <a target="_blank" href="{{content.videos[0].url|safe}}" class="pmedialink" title="{{content.videos[0].name}}">{{content.videos[0].name}}</a> -
   (<em>video/mp4, {{content.videos[0].size}}, {{content.videos[0].duration}}s</em>)
 </span>
+{%- if post.emojis and not is_comment %}<span class="emojis">
+  [{%- for emoji in post.emojis %}
+    <img class="mewe-emoji" src="{{ emoji.url }}" alt="{{ emoji.code }}"> {{ emoji.count }}
+    {%- if not loop.last %}|{%- endif %}
+  {%- endfor %}]
+</span>
+{%- endif %}
 <br>
 <div class="image-container">
  {% for video in content.videos %}
@@ -46,6 +59,13 @@
   <a target="_blank" href="{{content.files[0].url|safe}}" class="pmedialink" title="{{content.files[0].name}}">{{content.files[0].name}}</a> -
   (<em>{{content.files[0].mime}}, {{content.files[0].size}} bytes</em>)
 </span>
+{% if post.emojis and not is_comment %}<span class="emojis">
+  [{% for emoji in post.emojis %}
+    <img class="mewe-emoji" src="{{ emoji.url }}" alt="{{ emoji.code }}"> {{ emoji.count }}
+    {% if not loop.last %}|{% endif %}
+  {% endfor %}]
+</span>
+{% endif %}
 <br>
 <div class="nothumb">Нет<br>уменьшенной<br>копии.</div>
 {% elif content.link %}
@@ -53,6 +73,13 @@
   <a target="_blank" href="{{ content.link.url|safe }}" class="pmedialink" title="{{ content.link.title }}">{{ content.link.title }}</a> -
   (<em>link, {{ content.link.name }}</em>)
 </span>
+{% if post.emojis and not is_comment %}<span class="emojis">
+  [{% for emoji in post.emojis %}
+    <img class="mewe-emoji" src="{{ emoji.url }}" alt="{{ emoji.code }}"> {{ emoji.count }}
+    {% if not loop.last %}|{% endif %}
+  {% endfor %}]
+</span>
+{% endif %}
 <br>
   {% if content.link.thumb %}
   <div class="image-container">
@@ -68,5 +95,13 @@
   {% else %}
     <span class="filesize"></span>
     <div class="nothumb">Нет<br>уменьшенной<br>копии.</div>
+    {% if post.emojis %}
+    <span class="emojis">
+      [{% for emoji in post.emojis %}
+        <img class="mewe-emoji" src="{{ emoji.url }}" alt="{{ emoji.code }}"> {{ emoji.count }}
+      {% if not loop.last %}|{% endif %}
+      {% endfor %}]
+    </span>
+    {% endif %}
   {% endif %}
 {% endif %}
