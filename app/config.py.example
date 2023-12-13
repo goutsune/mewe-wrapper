@@ -1,0 +1,25 @@
+# locations here are relative to script execution path. e.g. if you start
+# wrapper via python ./app/main.py, cookie file will be read from directory
+# you run script from, NOT app folder
+cookie_storage = './mewe.com_cookies.txt'
+# IP address and port to listen, change in accordance, external access is not
+# recommended so far
+host = "127.0.0.1"
+port = 9505
+# TBD
+user_agent = 'MeWeAndroid/8.0.0'
+# This is inserted absolute links, change if running from domain or if
+# you really want the service available online (nginx auth proxy suggested)
+hostname = 'http://127.0.0.1:9505'
+# Proxy configuration as per Requests docs:
+# https://requests.readthedocs.io/en/stable/user/advanced/#proxies
+# proxy = {
+# 'http': 'http://user:pass@myproxy.com:3213/',
+# 'https': 'http://user:pass@myproxy.com:3213/',}
+# As per docs, SOCKS5 support requires different version, install with:
+# `python -m pip install requests[socks]` while in virtualenv, then specify
+# like this:
+# proxy = {
+# 'http': 'socks5://myproxy.com:1080/',
+# 'https': 'socks5://myproxy.com:1080/',}
+proxy = None  # None to disable proxy

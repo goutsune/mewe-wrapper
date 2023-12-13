@@ -9,7 +9,7 @@ from requests.utils import quote
 from threading import Lock
 from urllib import parse as p
 
-from config import cookie_storage, user_agent, hostname
+from config import cookie_storage, user_agent, hostname, proxy
 from markdown_tools import MeweEmojiExtension, MeweMentionExtension
 from utils import prepare_photo_url, prepare_comment_photo
 from mewe_cfg import MeweConfig
@@ -85,6 +85,8 @@ class Mewe:
 
     session.cookies = cookie_jar
     session.headers['user-agent'] = user_agent
+    if proxy is not None:
+      session.proxies.update(proxy)
 
     r = session.get(f'{self.base}/v3/auth/identify')
     if not r.ok or not r.json().get('authenticated', False):
