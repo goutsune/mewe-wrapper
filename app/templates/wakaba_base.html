@@ -28,10 +28,10 @@
     </div>
   <div class="logo">
    <a href="/"><img class="banner" src="/static/logo.png" width="150" height="50"></a><br>
-   {% block logo_title %}MeWeちゃん — {{post.author}}{% endblock %}
+   {% block logo_title %}MeWeちゃん — Huh?{% endblock %}
   </div>
   <hr>
-  {% block content %}<div class="logo">Now, where were we?</div>{% endblock %}
+  {% block content %}<div class="logo">{% if msg %}{{ msg }}{% else %}Now, where were we?{% endif %}</div>{% endblock %}
   <div class="adminbar">[ This space was intentionally left empty ]</div>
   <p class="footer">
    -

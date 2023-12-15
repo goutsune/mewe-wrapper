@@ -273,8 +273,11 @@ class Mewe:
 
       response = self.invoke_get(endpoint, payload)
 
+      if response['feed'] == []:
+        raise IndexError('Empty, either you\'ve reached the end, or this is a private profile.')
+
       page_feed = response['feed']
-      page_users_list = response['users']
+      page_users_list = response.get('users', [])
 
       next_link = response['_links'].get('nextPage', {'href': None})['href']
 
