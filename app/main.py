@@ -47,6 +47,12 @@ def make_index():
 
   return render_template('wakaba_index.html', medias=medias, notifies=notifies, last_active=last_active)
 
+@app.route('/markallread', methods=('POST',))
+def mark_all_as_read():
+  '''Mark all pending notifications as seen'''
+  c.mark_as_seen(mark_all=True)
+  return redirect('/')
+
 
 @app.route('/viewpost/<string:post_id>')
 def show_post(post_id):

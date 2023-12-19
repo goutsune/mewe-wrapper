@@ -211,3 +211,8 @@ a.quotejs:hover {
 	color: #34345C;
 }
 
+.dismiss {
+	display: inline;
+	float: right;
+	margin-top: -4px;
+}

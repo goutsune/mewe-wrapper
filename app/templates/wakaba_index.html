@@ -6,7 +6,9 @@
 {% block content%}
   <div class="mainpagecntnr">
     <div class="newscntnr">
-      <div class="news">Оповещения</div>
+      <div class="news">Оповещения
+        <form class="dismiss" method="post" action="/markallread"><input value="x" type="submit"></form>
+      </div>
       <div class="newscont">
         {% for notice in notifies %}
         <!--thread-->

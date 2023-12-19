@@ -2,7 +2,7 @@ body { margin: 0; padding: 8px; margin-bottom: auto; }
 div.post { margin: 12px 40px; }
 div.repost { display: flow-root; border: 1px dotted black; padding: 8px }
 code {font-family: monospace; }
-
+input { vertical-align: -4px; }
 form { margin-bottom: 0px }
 form .trap { display:none }
 .hidevideo {padding: 2px 20px;}
@@ -246,6 +246,13 @@ position: relative;
 .l2reply {
 	padding-left: 1.5em;
 }
+
+.dismiss {
+	display: inline;
+	float: right;
+	margin-top: -5px;
+}
+
 
 @media only screen and (max-width: 480px) {
 	html {
