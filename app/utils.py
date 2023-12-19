@@ -133,6 +133,16 @@ def prepare_notifications(notification_feed):
         'post_url': f'{hostname}/viewpost/{item["pollData"]["sharedPostId"]}',
         'comment_id': False})
 
+    elif kind == 'contact_birthday':
+      who = item['actingUsers'][0]['name']
+      date = f'{item["birthDayData"]["month"]}.{item["birthDayData"]["day"]}'
+
+      notice.update({
+        'headline': f'{who} has a birthday on {date}!',
+        'message': '',
+        'post_url': f'{hostname}/userfeed/{item["actingUsers"][0]["id"]}',
+        'comment_id': False})
+
     else:
       notice.update({
         'headline': f'Unknown notification type: {kind}',
