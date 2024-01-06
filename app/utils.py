@@ -70,15 +70,25 @@ def prepare_notifications(notification_feed):
         'post_url': f'{hostname}/viewpost/{item["postData"]["postItemId"]}',
         'comment_id': item['commentData']['id']})
 
-    elif kind == 'mention':  # is this how post mentions work?
-      author = users[item["postData"]['author']['id']]['name']
-      who = users[item['commentData']['author']['id']]['name']
+    elif kind == 'mention':
+      if 'commentData' in item:  # Mention inside a comment
+        author = users[item["postData"]['author']['id']]['name']
+        who = users[item['commentData']['author']['id']]['name']
 
-      notice.update({
-        'headline': f'{who} mentioned you in a post by {author}',
-        'message': item['commentData']['snippet'],
-        'post_url': f'{hostname}/viewpost/{item["postData"]["postItemId"]}',
-        'comment_id': item['commentData']['id']})
+        notice.update({
+          'headline': f'{who} mentioned you in a post by {author}',
+          'message': item['commentData']['snippet'],
+          'post_url': f'{hostname}/viewpost/{item["postData"]["postItemId"]}',
+          'comment_id': item['commentData']['id']})
+
+      else:
+        who = users[item["postData"]['author']['id']]['name']
+
+        notice.update({
+          'headline': f'{who} mentioned you in a post',
+          'message': item['postData']['snippet'],
+          'post_url': f'{hostname}/viewpost/{item["postData"]["postItemId"]}',
+          'comment_id': False})
 
     elif kind == 'emojis' and 'commentData' in item:  # reaction to comment
       if item['commentData']['author']['id'] not in users:
