@@ -4,13 +4,14 @@ from requests.utils import quote
 from time import sleep
 
 from config import host, port, hostname
+from data_proc import DataProcessor
 from mewe_api import Mewe
 from mewe_cfg import MeweConfig
-from utils import prepare_media_feed, prepare_notifications, gather_post_activity
 
 # ###################### Init
 app = Flask(__name__)
 c = Mewe()
+d = DataProcessor(c)
 
 
 # ###################### Quart setup
@@ -37,13 +38,13 @@ def make_index():
   '''Generates index page with latest medias and posts.
   Also shows user list and group list'''
   raw_medias = c.get_media_feed(limit=100)
-  medias = prepare_media_feed(raw_medias)
+  medias = d.prepare_media_feed(raw_medias)
 
   raw_notifies = c.get_notifications()
-  notifies = prepare_notifications(raw_notifies)
+  notifies = d.prepare_notifications(raw_notifies)
 
   posts, users = c.get_feed(limit=50)
-  last_active = gather_post_activity(posts, users)
+  last_active = d.gather_post_activity(posts, users)
 
   return render_template('wakaba_index.html', medias=medias, notifies=notifies, last_active=last_active)
 
@@ -60,7 +61,7 @@ def show_post(post_id):
 
   result = c.get_post(post_id)
   users = {user['id']: user for user in result['users']}
-  post_obj = c.prepare_single_post(result['post'], users, load_all_comments=True, retrieve_medias=True)
+  post_obj = d.prepare_single_post(result['post'], users, load_all_comments=True, retrieve_medias=True)
 
   markread = request.args.get('markread', None)
   if markread is not None:
@@ -145,7 +146,7 @@ def retr_feed():
   before = request.args.get('b')
 
   feed, users = c.get_feed(limit=limit, pages=pages, before=before)
-  posts, users = c.prepare_feed(feed, users)
+  posts, users = d.prepare_feed(feed, users)
 
   title = 'Подписки'
 
@@ -165,7 +166,7 @@ def retr_userfeed(user_id):
     feed, users = c.get_user_feed(user_id, limit=limit, pages=pages, before=before)
   except IndexError as e:
     return render_template('wakaba_base.html', msg=e)
-  posts, users = c.prepare_feed(feed, users)
+  posts, users = d.prepare_feed(feed, users)
 
   user = users[user_id]
   title = f'{user["name"]}'
