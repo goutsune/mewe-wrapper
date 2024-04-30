@@ -6,8 +6,6 @@ cookie_storage = './mewe.com_cookies.txt'
 # recommended so far
 host = "127.0.0.1"
 port = 9505
-# TBD
-user_agent = 'MeWeAndroid/8.0.0'
 # This is inserted absolute links, change if running from domain or if
 # you really want the service available online (nginx auth proxy suggested)
 hostname = 'http://127.0.0.1:9505'

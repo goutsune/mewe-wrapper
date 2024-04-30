@@ -10,8 +10,8 @@ from mewe_cfg import MeweConfig
 
 # ###################### Init
 app = Flask(__name__)
-c = Mewe()
-d = DataProcessor(c)
+api = Mewe()
+processor = DataProcessor(api)
 
 
 # ###################### Quart setup
@@ -25,7 +25,7 @@ def cleanup():
   '''prepare tokens
   '''
   print("Disconnecting...")
-  c.refresh_session()
+  api.refresh_session()
 
 @app.context_processor
 def inject_mewe_settings():
@@ -37,21 +37,21 @@ def inject_mewe_settings():
 def make_index():
   '''Generates index page with latest medias and posts.
   Also shows user list and group list'''
-  raw_medias = c.get_media_feed(limit=100)
-  medias = d.prepare_media_feed(raw_medias)
+  raw_medias = api.get_media_feed(limit=100)
+  medias = processor.prepare_media_feed(raw_medias)
 
-  raw_notifies = c.get_notifications()
-  notifies = d.prepare_notifications(raw_notifies)
+  raw_notifies = api.get_notifications()
+  notifies = processor.prepare_notifications(raw_notifies)
 
-  posts, users = c.get_feed(limit=50)
-  last_active = d.gather_post_activity(posts, users)
+  posts, users = api.get_feed(limit=50)
+  last_active = processor.gather_post_activity(posts, users)
 
   return render_template('wakaba_index.html', medias=medias, notifies=notifies, last_active=last_active)
 
 @app.route('/markallread', methods=('POST',))
 def mark_all_as_read():
   '''Mark all pending notifications as seen'''
-  c.mark_as_seen(mark_all=True)
+  api.mark_as_seen(mark_all=True)
   return redirect('/')
 
 
@@ -59,13 +59,14 @@ def mark_all_as_read():
 def show_post(post_id):
   '''Processes post data and displays it as single imageboard thread'''
 
-  result = c.get_post(post_id)
+  result = api.get_post(post_id)
   users = {user['id']: user for user in result['users']}
-  post_obj = d.prepare_single_post(result['post'], users, load_all_comments=True, retrieve_medias=True)
+  post_obj = processor.prepare_single_post(
+    result['post'], users, load_all_comments=True, retrieve_medias=True)
 
   markread = request.args.get('markread', None)
   if markread is not None:
-    c.mark_as_seen(notify_id=markread)
+    api.mark_as_seen(notify_id=markread)
 
   return render_template('wakaba_viewthread.html', post=post_obj)
 
@@ -79,16 +80,16 @@ def post_reply():
   text = request.form['text']
   postredir = int(request.form.get('postredir', '0'))
   if 'file' in request.files and request.files['file'].filename:
-    media = c.upload_comment_photo(request.files['file'])
+    media = api.upload_comment_photo(request.files['file'])
   else:
     media = None
 
   try:
     if reply_to:
-      c.post_reply(reply_to, text, media)
+      api.post_reply(reply_to, text, media)
 
     else:
-      c.post_comment(post_id, text, media)
+      api.post_comment(post_id, text, media)
 
   except ValueError as e:
     return str(e)
@@ -109,7 +110,7 @@ def new_post():
   visibility = request.form['visibility']
 
   if 'file' in request.files and request.files['file'].filename:
-    medias = [c.upload_photo(x) for x in request.files.getlist('file')]
+    medias = [api.upload_photo(x) for x in request.files.getlist('file')]
   else:
     medias = None
 
@@ -124,7 +125,7 @@ def new_post():
         everyone = False
         friends_only = False
 
-      res = c.make_post(text, everyone, friends_only, medias)
+      res = api.make_post(text, everyone, friends_only, medias)
 
   except ValueError as e:
     return str(e)
@@ -145,8 +146,8 @@ def retr_feed():
   pages = int(request.args.get('pages', '1'))
   before = request.args.get('b')
 
-  feed, users = c.get_feed(limit=limit, pages=pages, before=before)
-  posts, users = d.prepare_feed(feed, users)
+  feed, users = api.get_feed(limit=limit, pages=pages, before=before)
+  posts, users = processor.prepare_feed(feed, users)
 
   title = 'Подписки'
 
@@ -163,10 +164,10 @@ def retr_userfeed(user_id):
   before = request.args.get('b')
 
   try:
-    feed, users = c.get_user_feed(user_id, limit=limit, pages=pages, before=before)
+    feed, users = api.get_user_feed(user_id, limit=limit, pages=pages, before=before)
   except IndexError as e:
     return render_template('wakaba_base.html', msg=e)
-  posts, users = d.prepare_feed(feed, users)
+  posts, users = processor.prepare_feed(feed, users)
 
   user = users[user_id]
   title = f'{user["name"]}'
@@ -183,8 +184,8 @@ def retr_userfeed_rss(user_id):
 
   limit = request.args.get('limit', '50')
   pages = int(request.args.get('pages', '1'))
-  feed, users = c.get_user_feed(user_id, limit=limit, pages=pages)
-  posts, users = c.prepare_feed(feed, users, retrieve_medias=True)
+  feed, users = api.get_user_feed(user_id, limit=limit, pages=pages)
+  posts, users = api.prepare_feed(feed, users, retrieve_medias=True)
 
   user = users[user_id]
 
@@ -211,12 +212,12 @@ def proxy_media():
   mime = request.args.get('mime', 'application/octet-stream')
   name = request.args.get('name')
 
-  c.refresh_session()
-  res = c.session.get(f'https://mewe.com{url}', stream=True)
+  api.refresh_session()
+  res = api.session.get(f'https://mewe.com{url}', stream=True)
   if not res.ok:
     return res.iter_content(), 500
 
-  c.last_streamed_response = res
+  api.last_streamed_response = res
   return res.iter_content(chunk_size=1024), {
      'Content-Type': mime,
      'Content-Length': res.headers['content-length'],
