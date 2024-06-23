@@ -496,9 +496,8 @@ class DataProcessor:
     return headline
 
   def prepare_photo_url(self, photo, thumb=False, thumb_size=None, img_size=None):
-
     if thumb_size is None: thumb_size = self.config.thumb_load_size
-    if thumb_size is None: img_size = self.config.image_load_size
+    if img_size is None: img_size = self.config.image_load_size
 
     # Known image sizes: 50, 150, 400, 800, 1200, 2000
     if thumb:
@@ -515,7 +514,7 @@ class DataProcessor:
   def prepare_comment_photo(self, photo, thumb_size=None, img_size=None):
 
     if thumb_size is None: thumb_size = self.config.thumb_load_size
-    if thumb_size is None: img_size = self.config.image_load_size
+    if img_size is None: img_size = self.config.image_load_size
 
     url_template = photo['_links']['img']['href']
     mime = photo['mime']
