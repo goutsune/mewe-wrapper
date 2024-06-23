@@ -1,4 +1,5 @@
 import markdown
+import mimetypes
 from datetime import datetime, timedelta
 from requests.utils import quote
 
@@ -17,18 +18,6 @@ class DataProcessor:
   base = 'https://mewe.com/api'
   markdown = None
   emojis = None
-  mime_mapping = {
-    'image/jpeg': 'jpg',
-    'image/png': 'png',
-    'image/gif': 'gif',
-    'image/webp': 'webp',
-    'image/bmp': 'bmp',
-    'video/mp4': 'mp4',
-    'video/webm': 'webm',
-    'audio/flac': 'flac',
-  }
-
-  rev_mime = dict(map(reversed, mime_mapping.items()))
 
   def __init__(self, mewe_instance):
 
@@ -165,8 +154,8 @@ class DataProcessor:
             'text': '',
           }
 
-          if ext := self.mime_mapping.get(photo['mime']):
-            image_dict['name'] = f'{photo["id"]}.{ext}'
+          if ext := mimetypes.guess_extension(photo['mime']):
+            image_dict['name'] = f'{photo["id"]}{ext}'
           else:
             image_dict['name'] = photo['id']
 
@@ -258,7 +247,7 @@ class DataProcessor:
         # FIXME: Either put this into separate document object inside comment, or revise comment schema
         url = document_obj['_links']['url']['href']
         thumb = document_obj['_links']['iconUrl']['href']
-        mime = self.rev_mime[document_obj['type']]
+        mime = mimetypes.types_map.get(f'.{document_obj["type"]}', 'application/octet-stream')
         comment['images'].append({
           'url': f'{hostname}/proxy?url={url}&mime={mime}&name={document_obj["name"]}',
           'thumb': f'https://cdn.mewe.com/assets/icons/file-type/{document_obj["type"]}.png',
