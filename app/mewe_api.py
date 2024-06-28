@@ -33,7 +33,7 @@ class Mewe:
     '*/api/v2/comments/*/replies': 5,  # Replies update cooldown
     '*/api/v2/home/allfeed': 5,
     '*/api/v2/home/user/*/postsfeed': 5,  # For accidental F5's
-    '*': 5,  # Prevent accidential re-requests eg when loading same preview image from post and board view
+    '*': 5,  # Prevent accidential re-requests e.g. when loading same preview image from post and board view
   }
 
   _ignores = (
@@ -53,15 +53,17 @@ class Mewe:
     cookie_jar = cookiejar.MozillaCookieJar(cookie_storage)
     cookie_jar.load(ignore_discard=True, ignore_expires=True)
 
-    session = CachedSession(
-      'session_cache',
-      backend='sqlite',
-      cache_control=False,
-      ignored_parameters=self._ignores,
-      match_headers=True,
-      stale_if_error=True,
-      urls_expire_after=self._cache_defs,
-    )
+    # session = CachedSession(
+      # 'session_cache',
+      # backend='sqlite',
+      # cache_control=False,
+      # ignored_parameters=self._ignores,
+      # match_headers=True,
+      # stale_if_error=True,
+      # urls_expire_after=self._cache_defs,
+    # )
+
+    session = Session()
 
     session.cookies = cookie_jar
     session.headers['user-agent'] = config.user_agent
