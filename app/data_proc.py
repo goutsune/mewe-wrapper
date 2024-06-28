@@ -65,6 +65,9 @@ class DataProcessor:
       'thumb': link['_links'].get('thumbnail', {'href': ''})['href'],
     }
 
+    # There are links with no title, leaving this field empty create unclickable link
+    if not prepared_link['title']:
+      prepared_link['title'] = 'No Title'
     return prepared_link
 
   def prepare_poll(self, poll):
