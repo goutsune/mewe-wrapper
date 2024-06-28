@@ -168,35 +168,35 @@ class Mewe:
     '''
 
     self.refresh_lock.acquire()
-    if not self.is_token_expired():
-      self.session.cookies.save(ignore_discard=True, ignore_expires=True)
-      self.refresh_lock.release()
-      return
-
-    # Force-close last streamed connection in case it is still hogging up session
-    if self.last_streamed_response is not None:
-      self.last_streamed_response.close()
-      self.last_streamed_response = None
-
-    r = self.session.get(f'{self.base}/v3/auth/identify')
-
-    if not r.ok or not r.json().get('authenticated', False):
-      self.refresh_lock.release()
-      raise ConnectionError('Failed to identify user, are cookies fresh enough?')
-
     try:
-      self.session.headers['x-csrf-token'] = \
-        self.session.cookies._cookies['.mewe.com']['/']['csrf-token'].value
+      if not self.is_token_expired():
+        self.session.cookies.save(ignore_discard=True, ignore_expires=True)
+        return
 
-    except KeyError:
+      # Force-close last streamed connection in case it is still hogging up session
+      if self.last_streamed_response is not None:
+        self.last_streamed_response.close()
+        self.last_streamed_response = None
+
+      r = self.session.get(f'{self.base}/v3/auth/identify')
+
+      if not r.ok or not r.json().get('authenticated', False):
+        raise ConnectionError('Failed to identify user, are cookies fresh enough?')
+
+      try:
+        self.session.headers['x-csrf-token'] = \
+          self.session.cookies._cookies['.mewe.com']['/']['csrf-token'].value
+
+      except KeyError:
+        if self.session.headers.get('x-csrf-token') is None:
+          raise EnvironmentError(
+            'Failed to extract CSRF token from auth/identify operation and no usable '
+            'token exists in current session.')
+
+      self.session.cookies.save(ignore_discard=True, ignore_expires=True)
+
+    finally:
       self.refresh_lock.release()
-      if self.session.headers.get('x-csrf-token') is None:
-        raise EnvironmentError(
-          'Failed to extract CSRF token from auth/identify operation and no usable '
-          'token exists in current session.')
-
-    self.session.cookies.save(ignore_discard=True, ignore_expires=True)
-    self.refresh_lock.release()
 
   def whoami(self):
     '''Invokes me/info method to update info on current user. Useful to check API usability.
