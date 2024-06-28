@@ -185,7 +185,7 @@ def retr_userfeed_rss(user_id):
   limit = request.args.get('limit', '50')
   pages = int(request.args.get('pages', '1'))
   feed, users = api.get_user_feed(user_id, limit=limit, pages=pages)
-  posts, users = api.prepare_feed(feed, users, retrieve_medias=True)
+  posts, users = processor.prepare_feed(feed, users, retrieve_medias=True)
 
   user = users[user_id]
 
