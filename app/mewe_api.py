@@ -88,53 +88,36 @@ class Mewe:
     self.config = config
     self.refresh_lock = Lock()
 
+  def _invoke(self, method, endpoint, **kwargs):
+    '''Base method to wrap an arbitary requests http method with session session validation and some
+    checks.
+    '''
+    self.refresh_session()
+    response = method(endpoint, **kwargs)
+
+    if not response.ok:
+      if response.json().get('message', '') == 'Forbidden':
+        # This path is intended to allow fallback processing, e.g. redirect user to login page and ask
+        # for a new set of credential cookies. Right now we just inform user with exception, though.
+        raise ValueError(f'Mewe Session died, please provide new credentials.\n{response.text}')
+      else:
+        response.raise_for_status()
+
+    # Here we make an assumption that any non-zero length response is encoded as JSON, except for empty
+    # responses. Anything else will be raised by code above.
+    if response.text:
+      return response.json()
+
+
   def is_token_expired(self):
     access_token = self.session.cookies._cookies['.mewe.com']['/'].get('access-token')
     return access_token and access_token.is_expired()
 
   def invoke_get(self, endpoint, payload=None):
-    self.refresh_session()
-    r = self.session.get(endpoint, params=payload)
-    if not r.ok:
-      if r.json().get('message', '') == 'Forbidden':
-        try:
-          # Silly retry code, we can do better, but not this time
-          print('Session died, attempting restart')
-          self.reload_session()
-
-          r = self.session.get(endpoint, params=payload)
-          if not r.ok:
-            raise ValueError(f'Failed to invoke request after reload: {r.text}')
-
-        except Exception as e:
-          raise ValueError(f'Failed reload session: {e}')
-      else:
-        raise ValueError(f'Failed to invoke request: {r.text}')
-
-    return r.json()
+    return self._invoke(self.session.get, endpoint, params=payload)
 
   def invoke_post(self, endpoint, **kwargs):
-    self.refresh_session()
-    r = self.session.post(endpoint, **kwargs)
-    if not r.ok:
-      if r.json().get('message', '') == 'Forbidden':
-        try:
-          # Silly retry code, we can do better, but not this time
-          print('Session died, attempting restart')
-          self.reload_session()
-
-          r = self.session.post(endpoint, **kwargs)
-          if not r.ok:
-            raise ValueError(f'Failed to invoke request after reload: {r.text}')
-
-        except Exception as e:
-          raise ValueError(f'Failed reload session: {e}')
-      else:
-        raise ValueError(f'Failed to invoke request: {r.text}')
-    try:
-      return r.json()
-    except Exception as e:
-      return r.text
+    return self._invoke(self.session.post, endpoint, **kwargs)
 
   def session_ok(self):
     '''Checks if current session is still usable (e.g. no logout occurred due to API abuse or refresh token
@@ -148,6 +131,8 @@ class Mewe:
       return False
 
   def reload_session(self):
+    '''This loads new sets of cookies and recreates the session object
+    '''
     cookie_jar = cookiejar.MozillaCookieJar(cookie_storage)
     cookie_jar.load(ignore_discard=True, ignore_expires=True)
 

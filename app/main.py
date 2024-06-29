@@ -10,6 +10,7 @@ from mewe_cfg import MeweConfig
 
 # ###################### Init
 app = Flask(__name__)
+# TODO: Implement session loading from inside the application
 api = Mewe()
 processor = DataProcessor(api)
 
