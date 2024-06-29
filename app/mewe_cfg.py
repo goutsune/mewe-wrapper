@@ -12,3 +12,7 @@ class MeweConfig:
   # Max image size as requested, the actual resolution can be larger and smaller, in general 2000x2000 seems
   # to return original picture size
   image_load_size = '2000x2000'
+  # Collapse multi-image view when viewing thread
+  hide_post_images = False
+  # Collapse multi-image view when viewing board
+  hide_thread_images = True

@@ -69,7 +69,10 @@ def show_post(post_id):
   if markread is not None:
     api.mark_as_seen(notify_id=markread)
 
-  return render_template('wakaba_viewthread.html', post=post_obj)
+  return render_template(
+    'wakaba_viewthread.html',
+    post=post_obj,
+    hide_images=MeweConfig.hide_post_images)
 
 
 @app.route('/reply', methods=('POST',))
@@ -153,7 +156,11 @@ def retr_feed():
   title = 'Подписки'
 
   return render_template(
-    'wakaba_board.html', contents=posts, title=title, can_post=True)
+    'wakaba_board.html',
+    contents=posts,
+    title=title,
+    can_post=True,
+    hide_images=MeweConfig.hide_thread_images)
 
 
 @app.route('/userfeed/<string:user_id>')
@@ -174,7 +181,11 @@ def retr_userfeed(user_id):
   title = f'{user["name"]}'
 
   return render_template(
-    'wakaba_board.html', contents=posts, title=title, can_post=False)
+    'wakaba_board.html',
+    contents=posts,
+    title=title,
+    can_post=False,
+    hide_images=MeweConfig.hide_thread_images)
 
 
 @app.route('/userfeed_rss/<string:user_id>')

@@ -11,7 +11,7 @@
 {% endif %}
 <br>
 <div class="image-container">
- {% if content.images|length > 1 %}
+ {% if content.images|length > 1 and hide_images %}
  <div class="imgbuttons">
    {% for image in content.images %}
    <div class="imgselect{% if loop.first %} sactive{% endif %}" onmouseover="set_visible_image(this, {{ loop.index-1 }})">■</div>
@@ -20,7 +20,7 @@
  {% endif %}
  <div class="imgs">
  {% for image in content.images %}
- <a target="_blank" href="{{image.url}}" class="imglink{% if not loop.first %} thidden{% endif %}" title="{{image.name}} - ({{image.mime}}, {{image.size}})">
+ <a target="_blank" href="{{image.url}}" class="imglink{% if not loop.first and hide_images %} thidden{% endif %}" title="{{image.name}} - ({{image.mime}}, {{image.size}})">
    {% if image.thumb_vertical %}
    <img src="{{image.thumb}}" width="auto" height="{{ mewe_cfg.thumb_size }}" alt="{{image.name}}" class="thumb">
    {% else %}
