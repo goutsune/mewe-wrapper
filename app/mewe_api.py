@@ -92,7 +92,9 @@ class Mewe:
     '''Base method to wrap an arbitary requests http method with session session validation and some
     checks.
     '''
-    self.refresh_session()
+    if self.is_token_expired():
+      self.refresh_session()
+
     response = method(endpoint, **kwargs)
 
     if not response.ok:
@@ -155,11 +157,8 @@ class Mewe:
     '''
 
     self.refresh_lock.acquire()
-    try:
-      if not self.is_token_expired():
-        self.session.cookies.save(ignore_discard=True, ignore_expires=True)
-        return
 
+    try:
       # Force-close last streamed connection in case it is still hogging up session
       if self.last_streamed_response is not None:
         self.last_streamed_response.close()
