@@ -15,7 +15,10 @@
     <span class="reflink"><a href="javascript:insert(&#39;{{post.id}}&#39;, &#39;{{post.author_id}}&#39;)">№{{post.id[-8:]}}</a></span>
     <span class="postnum">#OP</span>
   </div>
-    {% if board_view %}[<a href="/viewpost/{{post.id}}" target="_blank">Ответ</a>]{% endif %}
+    {% if board_view -%}
+    [<a href="/viewpost/{{post.id}}" target="_blank">Ответ</a>]
+    [<a href="https://mewe.com/post/show/{{post.id}}" target="_blank">Mewe</a>]
+    {%- endif %}
   <div class="post">
     {{ post.content.text|safe }}
     {% if post.content.repost %}
