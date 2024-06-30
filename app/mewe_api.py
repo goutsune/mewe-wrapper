@@ -110,6 +110,13 @@ class Mewe:
     if response.text:
       return response.json()
 
+  def proxy_stream(self, url):
+    '''Wrapper function to stream media from MeWe
+    '''
+    if self.is_token_expired():
+      self.refresh_session()
+
+    return self.session.get(f'https://mewe.com{url}', stream=True)
 
   def is_token_expired(self):
     access_token = self.session.cookies._cookies['.mewe.com']['/'].get('access-token')

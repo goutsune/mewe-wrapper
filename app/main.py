@@ -224,10 +224,9 @@ def proxy_media():
   mime = request.args.get('mime', 'application/octet-stream')
   name = request.args.get('name')
 
-  api.refresh_session()
-  res = api.session.get(f'https://mewe.com{url}', stream=True)
+  res = api.proxy_stream(url)
   if not res.ok:
-    return res.iter_content(), 500
+    return res.iter_content(), res.status_code
 
   api.last_streamed_response = res
   return res.iter_content(chunk_size=1024), {
