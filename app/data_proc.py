@@ -279,7 +279,7 @@ class DataProcessor:
 
     for item in notification_feed['feed']:
       kind = item['notificationType']
-      users = {x['id']: x for x in item['actingUsers']}
+      users = {x['id']: x for x in item.get('actingUsers', {})}
 
       notice = {
         'type': kind,
@@ -336,6 +336,15 @@ class DataProcessor:
             'message': item['postData']['snippet'],
             'post_url': f'{hostname}/viewpost/{item["postData"]["postItemId"]}',
             'comment_id': False})
+
+      elif kind == 'emojis' and 'chatMessageData' in item:  # reaction to chat message
+
+        who = item['actingUsers'][0]['name']  # The first user in this list seems to be the one who reacted
+        notice.update({
+          'headline': f'{who} reacted to your chat message',
+          'message': item['chatMessageData']['snippet'],
+          'post_url': False,
+          'comment_id': False})
 
       elif kind == 'emojis' and 'commentData' in item:  # reaction to comment
         if item['commentData']['author']['id'] not in users:
@@ -398,6 +407,13 @@ class DataProcessor:
           'headline': f'{who} has a birthday on {date}!',
           'message': '',
           'post_url': f'{hostname}/userfeed/{item["actingUsers"][0]["id"]}',
+          'comment_id': False})
+
+      elif kind == 'generic':  # Generic newsletters from MeWe
+        notice.update({
+          'headline': item['title'],
+          'message': item['subtitle'],
+          'post_url': item['callToActionUrl'],
           'comment_id': False})
 
       else:
