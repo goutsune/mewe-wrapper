@@ -130,17 +130,28 @@ class DataProcessor:
         # Video with associated photo object
         if video := media.get('video'):
           prepared_url, prepared_name = self.prepare_video(video)
-          media_photo_size = media['photo']['size']
+          if 'photo' in media:
+            media_photo_size = media['photo']['size']
 
-          video_dict = {
-            'thumb': self.prepare_photo_url(media['photo'], thumb=True, thumb_size=self.config.thumb_load_size),
-            'url': prepared_url,
-            'name': prepared_name,
-            'width': min(media['photo']['size']['width'], 640),
-            'size': f'{media["photo"]["size"]["width"]}x{media["photo"]["size"]["height"]}',
-            'duration': video.get('duration', '???'),
-            'thumb_vertical': True if media_photo_size['width'] < media_photo_size['height'] else False,
-          }
+            video_dict = {
+              'thumb': self.prepare_photo_url(media['photo'], thumb=True, thumb_size=self.config.thumb_load_size),
+              'url': prepared_url,
+              'name': prepared_name,
+              'width': min(media_photo_size['width'], 640),
+              'size': f'{media_photo_size["width"]}x{media_photo_size["height"]}',
+              'duration': video.get('duration', '???'),
+              'thumb_vertical': True if media_photo_size['width'] < media_photo_size['height'] else False,
+            }
+          else:
+            video_dict = {
+              'thumb': None,
+              'url': prepared_url,
+              'name': prepared_name,
+              'width': None,
+              'size': 'Unknown',
+              'duration': video.get('duration', '???'),
+              'thumb_vertical': False,
+            }
 
           message['videos'].append(video_dict)
 

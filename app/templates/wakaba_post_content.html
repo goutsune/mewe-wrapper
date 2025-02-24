@@ -30,6 +30,7 @@
  {% endfor %}
  </div>
 </div>
+
 {% elif content.videos %}
 <span class="filesize">
   <a target="_blank" href="{{content.videos[0].url|safe}}" class="pmedialink" title="{{content.videos[0].name}}">{{content.videos[0].name}}</a> -
@@ -46,7 +47,9 @@
 <div class="image-container">
  {% for video in content.videos %}
  <a target="_blank" href="{{video.url}}" class="imglink" title="{{video.name}} - (video/mp4, {{video.size}}), {{video.duration}}s">
-   {% if video.thumb_vertical %}
+   {% if not video.thumb %}
+   <div class="nothumb" alt="{{video.name}}">Нет<br>уменьшенной<br>копии.</div>
+   {% elif video.thumb_vertical %}
    <img src="{{video.thumb|safe}}" width="auto" height="{{ mewe_cfg.thumb_size }}" alt="{{video.name}}" class="thumb">
    {% else %}
    <img src="{{video.thumb|safe}}" width="{{ mewe_cfg.thumb_size }}" height="auto" alt="{{video.name}}" class="thumb">
@@ -54,6 +57,7 @@
  </a>
  {% endfor %}
 </div>
+
 {% elif content.files %}
 <span class="filesize">
   <a target="_blank" href="{{content.files[0].url|safe}}" class="pmedialink" title="{{content.files[0].name}}">{{content.files[0].name}}</a> -
@@ -68,6 +72,7 @@
 {% endif %}
 <br>
 <div class="nothumb">Нет<br>уменьшенной<br>копии.</div>
+
 {% elif content.link %}
 <span class="filesize">
   <a target="_blank" href="{{ content.link.url|safe }}" class="pmedialink" title="{{ content.link.title }}">{{ content.link.title }}</a> -
